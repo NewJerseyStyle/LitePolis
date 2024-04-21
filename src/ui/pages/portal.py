@@ -1,0 +1,2 @@
+# C comment
+# RU comments
