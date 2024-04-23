@@ -28,12 +28,8 @@ except Exception as e:
     st.error(e)
 
 if st.session_state["authentication_status"]:
-    try:
-# if admin then goto admin pages
-        # if db query st.session_state["email"] is admin
+    pass
+    # if db query st.session_state["email"] role is admin
         # st.switch_page("pages/dashboard.py")
-# else goto user page
-        # else
+    # else:
         # st.switch_page("pages/portal.py")
-    except Exception as e:
-        st.error(e)
