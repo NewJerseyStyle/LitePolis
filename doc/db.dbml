@@ -1,0 +1,38 @@
+// Use DBML to define your database structure
+// Docs: https://dbml.dbdiagram.io/docs
+
+Table userdata {
+  id integer [primary key]
+  email string
+  password string
+  privilege string [default: "user"]
+}
+
+Table apikeys {
+  key string [primary key]
+  user_id integer
+}
+
+Table conversationdata {
+  id integer [primary key]
+  title string
+  description string
+  creator_id integer
+}
+
+Table commentsdata {
+  id integer [primary key]
+  create_date datetime
+  comment string
+  user_id integer
+  conversation_id integer
+  moderated bool [default: False]
+  approved bool [default: False]
+}
+
+Ref: apikeys.user_id > userdata.id
+
+Ref: userdata.id < conversationdata.creator_id
+
+Ref: userdata.id < commentsdata.user_id
+Ref: conversationdata.id < commentsdata.conversation_id
