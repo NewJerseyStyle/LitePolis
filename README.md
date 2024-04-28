@@ -1,4 +1,5 @@
-# LitePolis: Infrastructure for E-democracy
+# LitePolis
+Infrastructure for E-democracy  
 ![](https://img.shields.io/badge/status-under_development-red) ![](https://img.shields.io/badge/release-no_release-red)
 
 Polis is a real-time system for gathering, analyzing and understanding
