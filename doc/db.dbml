@@ -1,38 +1,35 @@
-// Use DBML to define your database structure
-// Docs: https://dbml.dbdiagram.io/docs
-
-Table userdata {
-  id integer [primary key]
-  email string
-  password string
-  privilege string [default: "user"]
+Table "userdata" {
+  "ID" BIGINT [pk, not null, increment]
+  "EMAIL" TEXT [not null]
+  "PASSWORD" TEXT [not null]
+  "PRIVILEGE" TEXT [default: "user"]
 }
 
-Table apikeys {
-  key string [primary key]
-  user_id integer
+Table "conversationdata" {
+  "ID" BIGINT [pk, not null, increment]
+  "NAME" TEXT [not null]
+  "DESCRIPTION" TEXT
+  "CREATOR_ID" BIGINT
 }
 
-Table conversationdata {
-  id integer [primary key]
-  title string
-  description string
-  creator_id integer
+Table "commentdata" {
+  "ID" BIGINT [pk, not null, increment]
+  "CREATE_DATE" DATETIME
+  "COMMENT" TEXT [not null]
+  "USER_ID" BIGINT [not null]
+  "CONVERSATION_ID" BIGINT [not null]
+  "MODERATED" BOOLEAN [default: "FALSE"]
+  "APPROVED" BOOLEAN [default: "FALSE"]
 }
 
-Table commentsdata {
-  id integer [primary key]
-  create_date datetime
-  comment string
-  user_id integer
-  conversation_id integer
-  moderated bool [default: False]
-  approved bool [default: False]
+Table "apikeys" {
+  "API_KEY" TEXT [pk, not null]
+  "USER_ID" BIGINT [not null]
 }
 
-Ref: apikeys.user_id > userdata.id
+Ref: apikeys.USER_ID > userdata.ID
 
-Ref: userdata.id < conversationdata.creator_id
+Ref: userdata.ID < conversationdata.CREATOR_ID
 
-Ref: userdata.id < commentsdata.user_id
-Ref: conversationdata.id < commentsdata.conversation_id
+Ref: userdata.ID < commentdata.USER_ID
+Ref: conversationdata.ID < commentdata.CONVERSATION_ID
