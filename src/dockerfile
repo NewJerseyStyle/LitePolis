@@ -1,2 +1,4 @@
-// os.environ['ui'] == 'streamlit'
-// os.environ['apikey'] == 'apikey'
+// os.environ['UI'] == 'streamlit'
+// os.environ['SQLUSER'] == 'apiuser'
+// os.environ['SQLPASS'] == 'sqlpass'
+// os.environ['API_KEY'] == 'apikey'
