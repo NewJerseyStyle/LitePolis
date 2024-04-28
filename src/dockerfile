@@ -1,4 +1,6 @@
 // os.environ['UI'] == 'streamlit'
 // os.environ['SQLUSER'] == 'apiuser'
 // os.environ['SQLPASS'] == 'sqlpass'
+// os.environ['SQLHOST'] == '192.168.0.10'
+// os.environ['SQLPORT'] == '9030'
 // os.environ['API_KEY'] == 'apikey'
