@@ -50,22 +50,24 @@ import os
 import mysql.connector
 from pypika import Query, Table, Values
 
-config = {
-    "user": os.environ.get('SQLUSER'),
-    "password": os.environ.get('SQLPASS'),
-    "host": os.environ.get('SQLHOST'),
-    "port": os.environ.get('SQLPORT'),
-    "charset": "utf8"
-}
-
 # connect to starrocks
-try:
-    cnx = mysql.connector.connect(**config)
-except mysql.connector.Error as err:
-    print("connect to starrocks failed. {}".format(err))
-else:
-    print("connect to starrocks successfully")
+def do_db_conn():
+    config = {
+        "user": os.environ.get('SQLUSER'),
+        "password": os.environ.get('SQLPASS'),
+        "host": os.environ.get('SQLHOST'),
+        "port": os.environ.get('SQLPORT'),
+        "charset": "utf8"
+    }
 
+    try:
+        cnx = mysql.connector.connect(**config)
+    except mysql.connector.Error as err:
+        print("connect to starrocks failed. {}".format(err))
+    print("connect to starrocks successfully")
+    return cnx
+
+cnx = do_db_conn()
 cursor = cnx.cursor()
 
 def check_db_conn_health():
@@ -145,7 +147,8 @@ class Users:
 
     """
     table = Table('userdata')
-    def __init__(self, email: str, password: str, privilege: str = 'user'):
+    def __init__(self, email: str = None, password: str = None,
+                 privilege: str = 'user', uid: int = None):
         """Example function with types documented in the docstring.
     
         `PEP 484`_ type annotations are supported. If attribute, parameter, and
@@ -169,8 +172,20 @@ class Users:
             self.data['email'] = email
         if password:
             self.data['password'] = password
-        if privilege:
-            self.data['privilege'] = privilege
+        if uid:
+            self.data['id'] = uid
+        self.data['privilege'] = privilege
+
+    @staticmethod
+    def get_user_id_from_email(email: str):
+        query = Query.from_(Users.table) \
+                    .select(Users.table.ID) \
+                    .where(Users.table.EMAIL == email)
+        try:
+            cursor.execute(query.get_sql())
+        except mysql.connector.Error as err:
+            print("query data failed. {}".format(err))
+        return cursor.fetchone()
 
     @staticmethod
     def get_user_from_api_key(api_key: str):
@@ -200,31 +215,6 @@ class Users:
             print("query data failed. {}".format(err))
         return cursor.fetchone()
 
-    @staticmethod
-    def set_user_from_json(user: dict):
-        """Example function with types documented in the docstring.
-    
-        `PEP 484`_ type annotations are supported. If attribute, parameter, and
-        return types are annotated according to `PEP 484`_, they do not need to be
-        included in the docstring:
-    
-        Parameters
-        ----------
-        param1 : int
-            The first parameter.
-        """
-        query = Query.into(Users.table).columns(*user.keys()).insert(*user.values())
-        if 'email' in user:
-            query = query.on_duplicate_key_update(Users.table.email, Values(Users.table.email))
-        if 'password' in user:
-            query = query.on_duplicate_key_update(Users.table.password, Values(Users.table.password))
-        if 'privilege' in user:
-            query = query.on_duplicate_key_update(Users.table.privilege, Values(Users.table.privilege))
-        try:
-            cursor.execute(query.get_sql())
-        except mysql.connector.Error as err:
-            print("query data failed. {}".format(err))
-
     def create(self):
         """Example function with types documented in the docstring.
     
@@ -235,7 +225,9 @@ class Users:
         # validate for create
         assert 'email' in self.data
         assert 'password' in self.data
-        query = Query.into(Users.table).columns(*self.data.keys()).insert(*self.data.values())
+        query = Query.into(Users.table) \
+                    .columns(*self.data.keys()) \
+                    .insert(*self.data.values())
         try:
             cursor.execute(query.get_sql())
         except mysql.connector.Error as err:
@@ -249,7 +241,27 @@ class Users:
         included in the docstring:
         """
         # validate for update
-        self.set_user_from_json(self.data)
+        assert 'id' in self.data
+        query = Query.update(Users.table)
+        has_data_for_update = False
+        if 'email' in self.data:
+            query = query.set(Users.table.EMAIL,
+                              self.data['email'])
+            has_data_for_update = True
+        if 'password' in self.data:
+            query = query.set(Users.table.PASSWORD,
+                              self.data['password'])
+            has_data_for_update = True
+        if 'privilege' in self.data:
+            query = query.set(Users.table.PRIVILEGE,
+                              self.data['privilege'])
+            has_data_for_update = True
+        query = query.where(Users.table.ID, self.data['id'])
+        assert has_data_for_update
+        try:
+            cursor.execute(query.get_sql())
+        except mysql.connector.Error as err:
+            print("query data failed. {}".format(err))
     
     def delete(self):
         """Example function with types documented in the docstring.
@@ -263,75 +275,167 @@ class Users:
 # CURD of conversation
 class Conversations:
     table = Table('conversationdata')
-    def __init__(self, title: str, desc: str, creator_email: str):
+    def __init__(self, title: str = None, desc: str = None,
+                 creator_id: int = None, cid: str = None):
         self.data = dict()
         if title:
             self.data['title'] = title
         if desc:
             self.data['desc'] = desc
-        if creator_email:
-            self.data['creator_email'] = creator_email
+        if creator_id:
+            self.data['creator_id'] = creator_id
+        if cid:
+            self.data['id'] = cid
 
     @staticmethod
-    def get_all_conversation(user):
-        return list()
+    def get_all_conversation(user_id: int = None,
+                             user_email: str = None):
+        if user_id is None:
+            assert user_email
+            user_id = Users.get_user_id_from_email(user_email)
+        query = Query.from_(Conversations.table).select('*') \
+                    .where(Conversations.table.CREATOR_ID == user_id)
+        try:
+            cursor.execute(query.get_sql())
+        except mysql.connector.Error as err:
+            print("query data failed. {}".format(err))
+        return cursor.fetchall()
 
     def get_conversation_from_id(self):
-        return "conversation"
-    
-    @staticmethod
-    def set_conversation_from_json(conv_config: dict):
-        pass
+        assert 'id' in self.data
+        query = Query.from_(self.table).select('*') \
+                    .where(self.table.ID == self.data['id'])
+        try:
+            cursor.execute(query.get_sql())
+        except mysql.connector.Error as err:
+            print("query data failed. {}".format(err))
+        return cursor.fetchone()
     
     def create(self):
         # validate for create
-        self.set_conversation_from_json(self.data)
+        assert 'title' in self.data
+        assert 'desc' in self.data
+        assert 'creator_id' in self.data
+        query = Query.into(self.table) \
+                    .columns(*self.data.keys()) \
+                    .insert(*self.data.values())
+        try:
+            cursor.execute(query.get_sql())
+        except mysql.connector.Error as err:
+            print("query data failed. {}".format(err))
 
     def update(self):
         # validate for update
-        self.set_conversation_from_json(self.data)
-
+        assert 'id' in self.data
+        query = Query.update(self.table)
+        has_data_for_update = False
+        if 'title' in self.data:
+            query = query.set(self.table.TITLE,
+                              self.data['title'])
+            has_data_for_update = True
+        if 'desc' in self.data:
+            query = query.set(self.table.DESCRIPTION,
+                              self.data['desc'])
+            has_data_for_update = True
+        query = query.where(self.table.ID, self.data['id'])
+        assert has_data_for_update
+        try:
+            cursor.execute(query.get_sql())
+        except mysql.connector.Error as err:
+            print("query data failed. {}".format(err))
+    
     def delete(self):
         raise NotImplementedError
 
 # CURD of comments
 class Comments:
-    def __init__(self, comment: dict):
-        self.data = comment
+    table = Table('commentdata')
+    def __init__(self, comment_id: int = None,  comment: str = None,
+                 user_id: int = None, conversation_id: int = None,
+                 moderated: bool = False, random: bool = False):
+        self.data = dict()
+        if comment_id:
+            self.data['id'] = comment_id
+        if comment:
+            self.data['comment'] = comment
+        if user_id:
+            self.data['user_id'] = user_id
+        if conversation_id:
+            self.data['conversation_id'] = conversation_id
+        self.data['moderated'] = moderated
+        self.data['random'] = random
 
-    def get_comment_from_id(self, uuid: str):
-        pass
+    @staticmethod
+    def get_comment_from_id(comment_id: int):
+        query = Query.from_(Comments.table).select('*') \
+                    .where(Comments.table.ID == comment_id)
+        try:
+            cursor.execute(query.get_sql())
+        except mysql.connector.Error as err:
+            print("query data failed. {}".format(err))
+        return cursor.fetchone()
 
-    def get_comments_from_conversation(self, moderated=True, random=False):
-        uuid = self.data.uuid
+    def get_comments_from_conversation(self):
+        assert 'moderated' in self.data
+        assert 'random' in self.data
+        assert 'conversation_id' in self.data
+        query = Query.from_(self.table).select('*')
+        column = self.table.CONVERSATION_ID
+        query = query.where(column == self.data['conversation_id'])
+        if moderated is True:
+            query = query.where(self.table.MODERATED == True)
+            query = query.where(self.table.APPROVED == True)
         if random is True:
-            sql = "SELECT * FROM comments WHERE conversation_uuid=uuid"
-            if moderated is True:
-                sql += " AND approved=TRUE"
             # random
             # weighted random by popularity
             # return mix comments
-            pass
-        else:
-            # return all comments
+            raise NotImplementedError
+            # add vote to database
+        try:
+            cursor.execute(query.get_sql())
+        except mysql.connector.Error as err:
+            print("query data failed. {}".format(err))
+        return cursor.fetchall()
 
     def get_comments_waiting_for_moderate(self):
-        uuid = self.data.uuid
-        sql = "SELECT * FROM comments WHERE conversation_uuid=uuid AND moderated=TRUE"
         # get comments in conversation that is not moderated before
-
-    @staticmethod
-    def set_comments_from_json(comment):
-        uuid = comment.conversation
-        # insert or update
+        assert 'conversation_id' in self.data
+        column = self.table.CONVERSATION_ID
+        query = Query.from_(self.table).select('*') \
+                    .where(column == self.data['conversation_id']) \
+                    .where(self.table.MODERATED == False)
+        try:
+            cursor.execute(query.get_sql())
+        except mysql.connector.Error as err:
+            print("query data failed. {}".format(err))
+        return cursor.fetchall()
 
     def create(self):
         # validate for create
-        self.set_comments_from_json(self.data)
+        assert 'comment' in self.data
+        assert 'user_id' in self.data
+        assert 'conversation_id' in self.data
+        column = self.table.CONVERSATION_ID
+        query = Query.into(self.table) \
+                    .columns(*self.data.keys()) \
+                    .insert(*self.data.values())
+        try:
+            cursor.execute(query.get_sql())
+        except mysql.connector.Error as err:
+            print("query data failed. {}".format(err))
 
     def update(self):
         # validate for update
-        self.set_comments_from_json(self.data)
+        raise NotImplementedError
+        # assert 'id' in self.data
+        # assert 'vote' in self.data
+        # query = Query.update(self.table) \
+        #             .set(self.table.UPVOTE, 1) \
+        #             .where(self.table.ID, self.data['id'])
+        # try:
+        #     cursor.execute(query.get_sql())
+        # except mysql.connector.Error as err:
+        #     print("query data failed. {}".format(err))
 
     def delete(self):
         raise NotImplementedError
