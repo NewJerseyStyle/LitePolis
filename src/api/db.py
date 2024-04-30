@@ -75,18 +75,17 @@ def check_db_conn_health():
 
 # default apikey read from env for frontend to establish connection
 api_keys = {
-    "e54d4431-5dab-474e-b71a-0db1fcb9e659": "7oDYjo3d9r58EJKYi5x4E8",
-    "5f0c7127-3be9-4488-b801-c7b6415b45e9": "mUP7PpTHmFAkxcQLWKMY8t"
+    "e54d4431-5dab-474e-b71a-0db1fcb9e659": "7oDYjo3d9r58EJKYi5x4E8"
 }
 
 # with default user from env
 users = {
     "7oDYjo3d9r58EJKYi5x4E8": {
-        "name": "Bob"
-    },
-    "mUP7PpTHmFAkxcQLWKMY8t": {
-        "name": "Alice"
-    },
+        "uid": 0,
+        "email": "root",
+        "password": "abc",
+        "privilege": "root"
+    }
 }
 
 def check_api_key(api_key: str):
@@ -110,7 +109,8 @@ def check_api_key(api_key: str):
         # expire this default one time API key
         return True
     table = Table('apikeys')
-    query = Query.from_(table).select('COUNT(*)').where(table.API_KEY == api_key)
+    query = Query.from_(table).select('COUNT(*)') \
+                .where(table.API_KEY == api_key)
     try:
         rows_count = cursor.execute(query.get_sql())
     except mysql.connector.Error as err:
@@ -439,3 +439,50 @@ class Comments:
 
     def delete(self):
         raise NotImplementedError
+
+class API_KEYS:
+    table = Table('apikeys')
+    def __init__(self, apikey: str, user_id: int = None):
+        self.data = dict()
+        self.data['api_key'] = apikey
+        self.data['user_id'] = user_id
+
+    def get_user_from_apikey(self):
+        query = Query.from_(self.table).select(self.table.USER_ID) \
+                    .where(self.table.API_KEY == self.data['api_key'])
+        try:
+            cursor.execute(query.get_sql())
+        except mysql.connector.Error as err:
+            print("query data failed. {}".format(err))
+        return cursor.fetchone()
+
+    def create(self):
+        # validate for create
+        assert 'user_id' in self.user_id
+        query = Query.into(self.table) \
+                    .columns(*self.data.keys()) \
+                    .insert(*self.data.values())
+        try:
+            cursor.execute(query.get_sql())
+        except mysql.connector.Error as err:
+            print("query data failed. {}".format(err))
+
+    def update(self):
+        # validate for update
+        assert 'user_id' in self.user_id
+        query = Query.update(self.table) \
+                    .set(self.table.API_KEY, self.data['api_key']) \
+                    .where(self.table.USER_ID == self.data['user_id'])
+        try:
+            cursor.execute(query.get_sql())
+        except mysql.connector.Error as err:
+            print("query data failed. {}".format(err))
+
+    def expire(self):
+        query = Query.update(self.table) \
+                    .set(self.table.API_KEY, "e65537") \
+                    .where(self.table.API_KEY == self.data['api_key'])
+        try:
+            cursor.execute(query.get_sql())
+        except mysql.connector.Error as err:
+            print("query data failed. {}".format(err))

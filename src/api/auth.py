@@ -26,7 +26,7 @@ the endpoints that required API key to access where this project start.
 from fastapi import Security, HTTPException, status
 from fastapi.security import APIKeyHeader
 
-from db import check_api_key, get_user_from_api_key
+from db import check_api_key, Users
 
 api_key_header = APIKeyHeader(name="X-API-Key")
 
@@ -53,7 +53,7 @@ def get_user(api_key_header: str = Security(api_key_header)):
     signature verification similar to SSL handshake would be a nice upgrade.
     """
     if check_api_key(api_key_header):
-        user = get_user_from_api_key(api_key_header)
+        user = Users.get_user_from_api_key(api_key_header)
         return user
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
