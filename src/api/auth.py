@@ -23,6 +23,8 @@ Above example is the default example function of `route.secure`
 the endpoints that required API key to access where this project start.
 """
 
+from uuid import UUID
+
 from fastapi import Security, HTTPException, status
 from fastapi.security import APIKeyHeader
 
@@ -44,18 +46,49 @@ def get_user(api_key_header: str = Security(api_key_header)):
 
     Returns
     -------
-    dict
-        A JSON in `dict` object contain information, roles of the user.
+    tuple
+        A tuple object contain (ID, EMAIL, PRIVILEGE)
+        if successful, None otherwise.
 
     Notes
     -----
     For future development, automated login process through public key
     signature verification similar to SSL handshake would be a nice upgrade.
     """
-    if check_api_key(api_key_header):
+    if is_valid_uuid(api_key_header) and check_api_key(api_key_header):
         user = Users.get_user_from_api_key(api_key_header)
-        return user
+        if user is not None:
+            return user
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Missing or invalid API key"
     )
+
+
+def is_valid_uuid(uuid_to_test, version=4):
+    """Check if uuid_to_test is a valid UUID.
+    
+     Parameters
+    ----------
+    uuid_to_test : str
+    version : {1, 2, 3, 4}
+    
+     Returns
+    -------
+    `True` if uuid_to_test is a valid UUID, otherwise `False`.
+    
+     Examples
+    --------
+    .. highlight:: python
+    .. code-block:: python
+        is_valid_uuid('c9bf9e57-1685-4c89-bafb-ff5af830be8a')
+        # return: True
+        is_valid_uuid('c9bf9e58')
+        # return: False
+    """
+    
+    try:
+        uuid_obj = UUID(uuid_to_test, version=version)
+    except ValueError:
+        return False
+    return str(uuid_obj) == uuid_to_test

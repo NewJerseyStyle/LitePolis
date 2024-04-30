@@ -44,6 +44,10 @@ Notes
     Creating instances of the classes in the module only initialize the
     data structure of the row about to be affected, *do not* affect the
     existing connection and *do not* establish new connection.
+
+    `mysql-connector-python` used in this module seem to be a bad idea
+    for the performance should change to `mysqlclient` in later version.
+    Benchmark reference [here](https://stackoverflow.com/questions/43102442/whats-the-difference-between-mysqldb-mysqlclient-and-mysql-connector-python).
 """
 
 import os
@@ -203,11 +207,14 @@ class Users:
         Returns
         -------
         tuple
-            (EMAIL, PRIVILEGE) if successful, None otherwise.
+            (ID, EMAIL, PRIVILEGE) if successful, None otherwise.
         """
         table = Table('apikeys')
-        query = Query.from_(Users.table).join(table).on(table.USER_ID == Users.table.ID) \
-                    .select(Users.table.ID, Users.table.EMAIL, Users.table.PRIVILEGE) \
+        query = Query.from_(Users.table).join(table) \
+                    .on(table.USER_ID == Users.table.ID) \
+                    .select(Users.table.ID,
+                            Users.table.EMAIL,
+                            Users.table.PRIVILEGE) \
                     .where(table.API_KEY == api_key)
         try:
             cursor.execute(query.get_sql())
@@ -276,7 +283,7 @@ class Users:
 class Conversations:
     table = Table('conversationdata')
     def __init__(self, title: str = None, desc: str = None,
-                 creator_id: int = None, cid: str = None):
+                 creator_id: int = None, cid: int = None):
         self.data = dict()
         if title:
             self.data['title'] = title
@@ -286,6 +293,7 @@ class Conversations:
             self.data['creator_id'] = creator_id
         if cid:
             self.data['id'] = cid
+        # enable moderation or not
 
     @staticmethod
     def get_all_conversation(user_id: int = None,
@@ -440,14 +448,14 @@ class Comments:
     def delete(self):
         raise NotImplementedError
 
-class API_KEYS:
+class API_Keys:
     table = Table('apikeys')
     def __init__(self, apikey: str, user_id: int = None):
         self.data = dict()
         self.data['api_key'] = apikey
         self.data['user_id'] = user_id
 
-    def get_user_from_apikey(self):
+    def get_user_id_from_apikey(self):
         query = Query.from_(self.table).select(self.table.USER_ID) \
                     .where(self.table.API_KEY == self.data['api_key'])
         try:
