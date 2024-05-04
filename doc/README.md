@@ -3,3 +3,7 @@
 - DOI: http://dx.doi.org/10.6035/recerca.5516
 
 This paper should be added in the documentation
+
+The algorithms should be mentioned too
+- [Algorithm of clustring, dimension reduction and more](https://compdemocracy.org/algorithms/)
+- [Representative Comments ranking algorithm](https://compdemocracy.org/Representative-Comments/)
