@@ -6,4 +6,6 @@ router = APIRouter()
 
 @router.get("/")
 async def get_testroute():
-    return "OK" if check_db_conn_health() else "DB conn failed"
+    if check_db_conn_health():
+        return {"detail": "OK"}
+    return {"detail": "DB conn failed"}
