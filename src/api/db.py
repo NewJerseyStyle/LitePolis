@@ -52,7 +52,7 @@ Notes
 
 import os
 import mysql.connector
-from pypika import Query, Table, Values
+from pypika import Query, Table
 
 # connect to starrocks
 def do_db_conn():
