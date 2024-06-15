@@ -13,12 +13,18 @@ router = APIRouter()
 
 @router.get("/")
 async def get_testroute(user: dict = Depends(get_user)):
-    return user
+    return {'detail': {
+        'id': user[0],
+        'email': user[1],
+        'role': user[2]
+    }}
 
 # user CRUD
 @router.get("/users/role")
 async def get_userrole(user: tuple = Depends(get_user)):
-    return user[2]
+    return {'detail': {
+        'role': user[2]
+    }}
 
 @router.put("/users/renew")
 async def update_usertoken(user: dict = Depends(get_user)):
@@ -29,13 +35,15 @@ async def update_usertoken(user: dict = Depends(get_user)):
         if api_keys.get_user_id_from_apikey() is None:
             api_keys.update()
             api_key_not_updated = False
-    return new_api_key
+    return {'detail': {
+        'key': new_api_key
+    }}
 
 if os.environ['ui'] == 'streamlit':
     @router.get("/users/auth")
     async def get_userauth(user: dict = Depends(get_user)):
         # collect all user password pair for streamlit auth
-        return useryaml
+        return {'detail': 'useryaml'}
 
 @router.get("/users/profile")
 async def get_userprofile(user: dict = Depends(get_user)):
