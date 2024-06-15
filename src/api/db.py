@@ -534,8 +534,10 @@ class Conversations:
         assert 'desc' in self.data
         assert 'creator_id' in self.data
         query = Query.into(self.table) \
-                    .columns(*self.data.keys()) \
-                    .insert(*self.data.values())
+                    .columns('NAME', 'DESCRIPTION', 'CREATOR_ID') \
+                    .insert(self.data['title'],
+                            self.data['desc'],
+                            self.data['creator_id'])
         try:
             cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
