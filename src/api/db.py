@@ -120,7 +120,7 @@ def check_api_key(api_key: str):
         rows_count = cursor.execute(query.get_sql().replace('"', ''))
     except mysql.connector.Error as err:
         print("query data failed. {}".format(err))
-    return rows_count > 0
+    return rows_count[0] > 0
 
 # CURD of users
 class Users:
