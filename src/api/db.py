@@ -78,21 +78,6 @@ cursor = cnx.cursor()
 def check_db_conn_health():
     return cnx.is_connected()
 
-# default apikey read from env for frontend to establish connection
-api_keys = {
-    "e54d4431-5dab-474e-b71a-0db1fcb9e659": "7oDYjo3d9r58EJKYi5x4E8"
-}
-
-# with default user from env
-users = {
-    "7oDYjo3d9r58EJKYi5x4E8": {
-        "uid": 0,
-        "email": "root",
-        "password": "abc",
-        "privilege": "root"
-    }
-}
-
 def check_api_key(api_key: str):
     """Verify the API key from client side.
 
@@ -110,16 +95,14 @@ def check_api_key(api_key: str):
     -----
         Expire should be added to the API Key records in the future.
     """
-    if api_key in api_keys:
-        # expire this default one time API key
-        return True
     table = Table('apikeys')
     query = Query.from_(table).select('COUNT(*)') \
                 .where(table.API_KEY == api_key)
     try:
-        rows_count = cursor.execute(query.get_sql().replace('"', ''))
+        cursor.execute(query.get_sql().replace('"', ''))
     except mysql.connector.Error as err:
         print("query data failed. {}".format(err))
+    rows_count = cursor.fetchone()
     return rows_count[0] > 0
 
 # CURD of users
