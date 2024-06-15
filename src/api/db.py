@@ -61,6 +61,7 @@ def do_db_conn():
         "password": os.environ.get('SQLPASS'),
         "host": os.environ.get('SQLHOST'),
         "port": os.environ.get('SQLPORT'),
+        "database": "litepolis",
         "charset": "utf8"
     }
 
@@ -116,7 +117,7 @@ def check_api_key(api_key: str):
     query = Query.from_(table).select('COUNT(*)') \
                 .where(table.API_KEY == api_key)
     try:
-        rows_count = cursor.execute(query.get_sql())
+        rows_count = cursor.execute(query.get_sql().replace('"', ''))
     except mysql.connector.Error as err:
         print("query data failed. {}".format(err))
     return rows_count > 0
@@ -186,7 +187,7 @@ class Users:
                     .select(Users.table.ID) \
                     .where(Users.table.EMAIL == email)
         try:
-            cursor.execute(query.get_sql())
+            cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
         return cursor.fetchone()
@@ -217,7 +218,7 @@ class Users:
                             Users.table.PRIVILEGE) \
                     .where(table.API_KEY == api_key)
         try:
-            cursor.execute(query.get_sql())
+            cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
         return cursor.fetchone()
@@ -236,7 +237,7 @@ class Users:
                     .columns(*self.data.keys()) \
                     .insert(*self.data.values())
         try:
-            cursor.execute(query.get_sql())
+            cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
 
@@ -266,7 +267,7 @@ class Users:
         query = query.where(Users.table.ID, self.data['id'])
         assert has_data_for_update
         try:
-            cursor.execute(query.get_sql())
+            cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
     
@@ -304,7 +305,7 @@ class Conversations:
         query = Query.from_(Conversations.table).select('*') \
                     .where(Conversations.table.CREATOR_ID == user_id)
         try:
-            cursor.execute(query.get_sql())
+            cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
         return cursor.fetchall()
@@ -314,7 +315,7 @@ class Conversations:
         query = Query.from_(self.table).select('*') \
                     .where(self.table.ID == self.data['id'])
         try:
-            cursor.execute(query.get_sql())
+            cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
         return cursor.fetchone()
@@ -328,7 +329,7 @@ class Conversations:
                     .columns(*self.data.keys()) \
                     .insert(*self.data.values())
         try:
-            cursor.execute(query.get_sql())
+            cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
 
@@ -348,7 +349,7 @@ class Conversations:
         query = query.where(self.table.ID, self.data['id'])
         assert has_data_for_update
         try:
-            cursor.execute(query.get_sql())
+            cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
     
@@ -378,7 +379,7 @@ class Comments:
         query = Query.from_(Comments.table).select('*') \
                     .where(Comments.table.ID == comment_id)
         try:
-            cursor.execute(query.get_sql())
+            cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
         return cursor.fetchone()
@@ -400,7 +401,7 @@ class Comments:
             raise NotImplementedError
             # add vote to database
         try:
-            cursor.execute(query.get_sql())
+            cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
         return cursor.fetchall()
@@ -413,7 +414,7 @@ class Comments:
                     .where(column == self.data['conversation_id']) \
                     .where(self.table.MODERATED == False)
         try:
-            cursor.execute(query.get_sql())
+            cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
         return cursor.fetchall()
@@ -428,7 +429,7 @@ class Comments:
                     .columns(*self.data.keys()) \
                     .insert(*self.data.values())
         try:
-            cursor.execute(query.get_sql())
+            cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
 
@@ -441,7 +442,7 @@ class Comments:
         #             .set(self.table.UPVOTE, 1) \
         #             .where(self.table.ID, self.data['id'])
         # try:
-        #     cursor.execute(query.get_sql())
+        #     cursor.execute(query.get_sql().replace('"', ''))
         # except mysql.connector.Error as err:
         #     print("query data failed. {}".format(err))
 
@@ -459,7 +460,7 @@ class API_Keys:
         query = Query.from_(self.table).select(self.table.USER_ID) \
                     .where(self.table.API_KEY == self.data['api_key'])
         try:
-            cursor.execute(query.get_sql())
+            cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
         return cursor.fetchone()
@@ -471,7 +472,7 @@ class API_Keys:
                     .columns(*self.data.keys()) \
                     .insert(*self.data.values())
         try:
-            cursor.execute(query.get_sql())
+            cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
 
@@ -482,7 +483,7 @@ class API_Keys:
                     .set(self.table.API_KEY, self.data['api_key']) \
                     .where(self.table.USER_ID == self.data['user_id'])
         try:
-            cursor.execute(query.get_sql())
+            cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
 
@@ -491,6 +492,6 @@ class API_Keys:
                     .set(self.table.API_KEY, "e65537") \
                     .where(self.table.API_KEY == self.data['api_key'])
         try:
-            cursor.execute(query.get_sql())
+            cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
