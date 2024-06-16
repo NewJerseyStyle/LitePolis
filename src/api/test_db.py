@@ -75,7 +75,7 @@ class TestComments(unittest.TestCase):
                            conversation_id=0,
                            comment='This is a test comment')
         comment.create()
-        self.assertEqual(comment.get_comment_from_id(1), 'This is a test comment')
+        self.assertEqual(comment.get_comment_from_id(1)[2], 'This is a test comment')
         lst = comment.get_comments_from_conversation(1)
         self.assertGreater(len(lst), 0)
         self.assertEqual(lst[0], 'This is a test comment')
