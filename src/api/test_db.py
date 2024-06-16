@@ -62,8 +62,12 @@ class TestConversations(unittest.TestCase):
 class TestComments(unittest.TestCase):
     def test_init(self):
         comment = Comments(comment_id=1, user_id=1, comment='This is a test comment')
-        self.assertEqual(comment.data, {'id': 1, 'user_id': 1,
-                                        'comment': 'This is a test comment'})
+        self.assertEqual(comment.data, {'id': 1,
+                                        'user_id': 1,
+                                        'comment': 'This is a test comment',
+                                        'moderated': False,
+                                        'random': False,
+                                       })
 
     def test_create(self):
         comment = Comments(comment_id=1,
