@@ -72,11 +72,11 @@ class TestComments(unittest.TestCase):
 
     def test_create(self):
         comment = Comments(user_id=1,
-                           conversation_id=0,
+                           conversation_id=1,
                            comment='This is a test comment')
         comment.create()
         self.assertEqual(comment.get_comment_from_id(1)[2], 'This is a test comment')
-        lst = comment.get_comments_from_conversation(1)
+        lst = comment.get_comments_from_conversation()
         self.assertGreater(len(lst), 0)
         self.assertEqual(lst[0], 'This is a test comment')
         lst = comment.get_comments_waiting_for_moderate()
@@ -86,12 +86,12 @@ class TestComments(unittest.TestCase):
         comment.data['moderated'] = True
         comment.update()
         comment.data['moderated'] = False
-        lst = comment.get_comments_from_conversation(1)
+        lst = comment.get_comments_from_conversation()
         self.assertEqual(len(lst), 0)
         lst = comment.get_comments_waiting_for_moderate()
         self.assertEqual(len(lst), 0)
         comment.data['moderated'] = True
-        lst = comment.get_comments_from_conversation(1)
+        lst = comment.get_comments_from_conversation()
         self.assertGreater(len(lst), 0)
 
     def test_delete(self):
