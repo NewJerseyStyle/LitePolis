@@ -39,12 +39,11 @@ class TestConversations(unittest.TestCase):
         conversation = Conversations(creator_id=1,
                                      title='Test Conversation',
                                      desc='Test Description')
-        cid = conversation.create()
-        print(cid)
+        conversation.create()
         lst = Conversations.get_all_conversation(1)
         self.assertGreater(len(lst), 0)
         self.assertEqual(lst[0][1], 'Test Conversation') # need to check/debug
-        conversation = Conversations(cid=cid,
+        conversation = Conversations(cid=lst[0][0],
                                      creator_id=1,
                                      title='Updated Conversation Title')
         c = conversation.get_conversation_from_id()
@@ -75,8 +74,8 @@ class TestComments(unittest.TestCase):
         comment = Comments(user_id=1,
                            conversation_id=0,
                            comment='This is a test comment')
-        id = comment.create()
-        self.assertEqual(comment.get_comment_from_id(id), 'This is a test comment')
+        comment.create()
+        self.assertEqual(comment.get_comment_from_id(0), 'This is a test comment')
         lst = comment.get_comments_from_conversation(0)
         self.assertGreater(len(lst), 0)
         self.assertEqual(lst[0], 'This is a test comment')
