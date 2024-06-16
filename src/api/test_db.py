@@ -33,7 +33,7 @@ class TestConversations(unittest.TestCase):
         conversation = Conversations(cid=1, creator_id=1,
                                      title='Test Conversation')
         self.assertEqual(conversation.data,
-                         {'cid': 1, 'user_id': 1, 'title': 'Test Conversation'})
+                         {'id': 1, 'user_id': 1, 'title': 'Test Conversation'})
 
     def test_create_and_get_all_conversation(self):
         conversation = Conversations(cid=1, creator_id=1,
@@ -47,7 +47,8 @@ class TestConversations(unittest.TestCase):
         self.assertEqual(c[1], 'Test Conversation') # need to check/debug
 
     def test_update(self):
-        conversation = Conversations(cid=1, user_id=1, title='Updated Conversation Title')
+        conversation = Conversations(cid=1, creator_id=1,
+                                     title='Updated Conversation Title')
         conversation.update()
         c = Conversations.get_conversation_from_id(1)
         self.assertEqual(c[1], 'Updated Conversation Title') # need to check/debug
@@ -61,13 +62,13 @@ class TestConversations(unittest.TestCase):
 class TestComments(unittest.TestCase):
     def test_init(self):
         comment = Comments(comment_id=1, user_id=1, comment='This is a test comment')
-        self.assertEqual(comment.data, {'comment_id': 1, 'user_id': 1,
-                                        'comment_text': 'This is a test comment'})
+        self.assertEqual(comment.data, {'id': 1, 'user_id': 1,
+                                        'comment': 'This is a test comment'})
 
     def test_create(self):
         comment = Comments(comment_id=1,
                            user_id=1,
-                           cid=0,
+                           conversation_id=0,
                            comment='This is a test comment')
         comment.create()
         self.assertEqual(comment.get_comment_from_id(1), 'This is a test comment')
@@ -90,7 +91,7 @@ class TestComments(unittest.TestCase):
 
     def test_delete(self):
         # comment = Comments(comment_id=1,
-        #                    cid=0,
+        #                    conversation_id=0,
         #                    user_id=1,
         #                    comment='This is a test comment')
         # comment.delete()
