@@ -103,7 +103,7 @@ def check_api_key(api_key: str):
     except mysql.connector.Error as err:
         print("query data failed. {}".format(err))
     rows_count = cursor.fetchone()
-    return rows_count[0] > 0
+    return rows_count is not None and rows_count[0] > 0
 
 # CURD of users
 class Users:
@@ -214,7 +214,8 @@ class Users:
             cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
-        return cursor.fetchone()[0]
+        result = cursor.fetchone()
+        return result if result is None else result[0]
 
     @staticmethod
     def get_user_from_api_key(api_key: str):
@@ -951,7 +952,9 @@ class API_Keys:
             cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
-        return cursor.fetchone()[0] # get the first element of tuple (1,)
+        # get the first element of tuple (1,)
+        result = cursor.fetchone()
+        return result if result is None else result[0]
 
     def create(self):
         """Creates a new API key in the database.
@@ -1001,12 +1004,10 @@ class API_Keys:
             print("query data failed. {}".format(err))
 
     def expire(self):
-        """Expires an API key by setting it to a default value.
+        """Expires an API key by removing the record.
 
-        This method executes a SQL query to expire an API key by setting it to a default value.
-        It updates the API key in the database, effectively expiring it.
-        Default value does not match with UUID pattern which makes it unaccessable while holding
-        the place for the user to renew the apikey.
+        This method executes a SQL query to expire an API key by removing it from database,
+        effectively expiring it.
 
         Examples
         --------
@@ -1015,8 +1016,7 @@ class API_Keys:
             api_key = API_Keys(apikey='my_api_key', user_id=1)
             api_key.expire()
         """
-        query = Query.update(self.table) \
-                    .set(self.table.API_KEY, "e65537") \
+        query = Query.from_(self.table).delete() \
                     .where(self.table.API_KEY == self.data['api_key'])
         try:
             cursor.execute(query.get_sql().replace('"', ''))
