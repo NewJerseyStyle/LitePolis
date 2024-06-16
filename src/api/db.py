@@ -535,7 +535,7 @@ class Conversations:
         query = Query.update(self.table)
         has_data_for_update = False
         if 'title' in self.data:
-            query = query.set(self.table.TITLE,
+            query = query.set(self.table.NAME,
                               self.data['title'])
             has_data_for_update = True
         if 'desc' in self.data:
@@ -805,6 +805,7 @@ class Comments:
         assert 'user_id' in self.data
         assert 'conversation_id' in self.data
         column = self.table.CONVERSATION_ID
+        data = [v for k, v in self.data.items() if k not in ['random']]
         query = Query.into(self.table) \
                     .columns(*self.data.keys()) \
                     .insert(*self.data.values())
