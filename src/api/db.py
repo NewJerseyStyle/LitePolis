@@ -316,7 +316,7 @@ class Users:
             query = query.set(Users.table.PRIVILEGE,
                               self.data['privilege'])
             has_data_for_update = True
-        query = query.where(Users.table.ID, self.data['id'])
+        query = query.where(Users.table.ID == self.data['id'])
         assert has_data_for_update
         try:
             cursor.execute(query.get_sql().replace('"', ''))
