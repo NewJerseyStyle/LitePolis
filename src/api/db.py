@@ -995,9 +995,11 @@ class API_Keys:
         """
         # validate for update
         assert 'user_id' in self.data
-        query = Query.update(self.table) \
-                    .set(self.table.API_KEY, self.data['api_key']) \
-                    .where(self.table.USER_ID == self.data['user_id'])
+        assert 'api_key' in self.data
+        self.expire()
+        query = Query.into(self.table) \
+                    .columns(*self.data.keys()) \
+                    .insert(*self.data.values())
         try:
             cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
