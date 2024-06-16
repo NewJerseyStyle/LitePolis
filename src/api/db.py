@@ -736,10 +736,10 @@ class Comments:
         query = Query.from_(self.table).select('*')
         column = self.table.CONVERSATION_ID
         query = query.where(column == self.data['conversation_id'])
-        if moderated is True:
+        if self.data['moderated'] is True:
             query = query.where(self.table.MODERATED == True)
             query = query.where(self.table.APPROVED == True)
-        if random is True:
+        if self.data['random'] is True:
             # random
             # weighted random by popularity
             # return mix comments
