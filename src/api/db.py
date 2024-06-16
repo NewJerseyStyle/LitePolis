@@ -262,6 +262,11 @@ class Users:
         """Creates a new user in the database based on the information provided
         to initialize the instance.
 
+        Returns
+        -------
+        int
+            The user ID of the new user
+
         Examples
         --------
         .. highlight:: python
@@ -283,6 +288,7 @@ class Users:
             cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
+        return cursor.lastrowid
 
     def update(self):
         """Updates an existing user in the database based on the information provided
@@ -494,6 +500,11 @@ class Conversations:
         This method executes a SQL query to create a new conversation.
         The `title`, `desc`, and `creator_id` must be present in the `data` attribute of the Conversation object.
 
+        Returns
+        -------
+        int
+            The ID of new conversation
+
         Examples
         --------
         .. highlight:: python
@@ -514,6 +525,7 @@ class Conversations:
             cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
+        return cursor.lastrowid
  
     def update(self):
         """Updates an existing conversation.
@@ -793,6 +805,11 @@ class Comments:
         This method executes a SQL query to create a new comment in the database.
         It validates the required fields before creating the comment.
 
+        Returns
+        -------
+        int
+            ID of the inserted comment
+
         Examples
         --------
         .. highlight:: python
@@ -812,6 +829,7 @@ class Comments:
             cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
+        return cursor.lastrowid
 
     def update(self):
         """Updates an existing comment in the database.
