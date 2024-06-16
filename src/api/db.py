@@ -805,10 +805,10 @@ class Comments:
         assert 'user_id' in self.data
         assert 'conversation_id' in self.data
         column = self.table.CONVERSATION_ID
-        data = [v for k, v in self.data.items() if k not in ['random']]
+        data = dict([(k, v) for k, v in self.data.items() if k not in ['random']])
         query = Query.into(self.table) \
-                    .columns(*self.data.keys()) \
-                    .insert(*self.data.values())
+                    .columns(*data.keys()) \
+                    .insert(*data.values())
         try:
             cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
