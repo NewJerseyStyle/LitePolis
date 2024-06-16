@@ -1,6 +1,6 @@
 import unittest
 
-from .db import Users, Conversations, Comments, API_Keys
+from db import Users, Conversations, Comments, API_Keys
 
 
 class TestUsers(unittest.TestCase):
