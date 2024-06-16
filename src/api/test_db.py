@@ -36,18 +36,17 @@ class TestConversations(unittest.TestCase):
                          {'id': 1, 'creator_id': 1, 'title': 'Test Conversation'})
 
     def test_create_and_get_all_conversation(self):
-        conversation = Conversations(cid=1, creator_id=1,
+        conversation = Conversations(creator_id=1,
                                      title='Test Conversation',
                                      desc='Test Description')
-        conversation.create()
+        cid = conversation.create()
         lst = Conversations.get_all_conversation(1)
         self.assertGreater(len(lst), 0)
         self.assertEqual(lst[0][1], 'Test Conversation') # need to check/debug
         c = conversation.get_conversation_from_id()
         self.assertEqual(c[1], 'Test Conversation') # need to check/debug
-
-    def test_update(self):
-        conversation = Conversations(cid=1, creator_id=1,
+        conversation = Conversations(cid=cid,
+                                     creator_id=1,
                                      title='Updated Conversation Title')
         conversation.update()
         c = conversation.get_conversation_from_id()
@@ -62,26 +61,25 @@ class TestConversations(unittest.TestCase):
 class TestComments(unittest.TestCase):
     def test_init(self):
         comment = Comments(comment_id=1, user_id=1, comment='This is a test comment')
-        self.assertEqual(comment.data, {'id': 1,
-                                        'user_id': 1,
+        self.assertEqual(comment.data, {'user_id': 1,
                                         'comment': 'This is a test comment',
                                         'moderated': False,
                                         'random': False,
                                        })
 
     def test_create(self):
-        comment = Comments(comment_id=1,
-                           user_id=1,
+        comment = Comments(user_id=1,
                            conversation_id=0,
                            comment='This is a test comment')
-        comment.create()
-        self.assertEqual(comment.get_comment_from_id(1), 'This is a test comment')
-        lst = comment.get_comments_from_conversation(1)
+        id = comment.create()
+        self.assertEqual(comment.get_comment_from_id(id), 'This is a test comment')
+        lst = comment.get_comments_from_conversation(0)
         self.assertGreater(len(lst), 0)
         self.assertEqual(lst[0], 'This is a test comment')
         lst = comment.get_comments_waiting_for_moderate()
         self.assertGreater(len(lst), 0)
         self.assertEqual(lst[0], 'This is a test comment')
+        comment.data['id'] = id
         comment.data['moderated'] = True
         comment.update()
         comment.data['moderated'] = False
