@@ -172,11 +172,10 @@ class Users:
             The user ID (default: None).
             """
         self.data = dict()
-        if email:
-            self.data['email'] = email
-        if password:
+        self.data['email'] = email
+        if password is not None:
             self.data['password'] = password
-        if uid:
+        if uid is not None:
             self.data['id'] = uid
         self.data['privilege'] = privilege
 
@@ -406,13 +405,13 @@ class Conversations:
             conversation = Conversations("My Conversation", "This is a conversation", 1)
         """
         self.data = dict()
-        if title:
+        if title is not None:
             self.data['title'] = title
-        if desc:
+        if desc is not None:
             self.data['desc'] = desc
-        if creator_id:
+        if creator_id is not None:
             self.data['creator_id'] = creator_id
-        if cid:
+        if cid is not None:
             self.data['id'] = cid
         # enable moderation or not
 
@@ -652,13 +651,13 @@ class Comments:
             comment = Comments(comment="Hello, world!", user_id=1, conversation_id=1)
         """
         self.data = dict()
-        if comment_id:
+        if comment_id is not None:
             self.data['id'] = comment_id
-        if comment:
+        if comment is not None:
             self.data['comment'] = comment
-        if user_id:
+        if user_id is not None:
             self.data['user_id'] = user_id
-        if conversation_id:
+        if conversation_id is not None:
             self.data['conversation_id'] = conversation_id
         self.data['moderated'] = moderated
         self.data['random'] = random
@@ -925,7 +924,8 @@ class API_Keys:
         """
         self.data = dict()
         self.data['api_key'] = apikey
-        self.data['user_id'] = user_id
+        if user_id is not None:
+            self.data['user_id'] = user_id
 
     def get_user_id_from_apikey(self):
         """Retrieves the user ID associated with the API key.
