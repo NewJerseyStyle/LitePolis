@@ -543,7 +543,7 @@ class Conversations:
             query = query.set(self.table.DESCRIPTION,
                               self.data['desc'])
             has_data_for_update = True
-        query = query.where(self.table.ID, self.data['id'])
+        query = query.where(self.table.ID == self.data['id'])
         assert has_data_for_update
         try:
             cursor.execute(query.get_sql().replace('"', ''))
