@@ -40,6 +40,7 @@ class TestConversations(unittest.TestCase):
                                      title='Test Conversation',
                                      desc='Test Description')
         cid = conversation.create()
+        print(cid)
         lst = Conversations.get_all_conversation(1)
         self.assertGreater(len(lst), 0)
         self.assertEqual(lst[0][1], 'Test Conversation') # need to check/debug
@@ -47,9 +48,11 @@ class TestConversations(unittest.TestCase):
                                      creator_id=1,
                                      title='Updated Conversation Title')
         c = conversation.get_conversation_from_id()
+        self.assertIsNotNone(c)
         self.assertEqual(c[1], 'Test Conversation') # need to check/debug
         conversation.update()
         c = conversation.get_conversation_from_id()
+        self.assertIsNotNone(c)
         self.assertEqual(c[1], 'Updated Conversation Title') # need to check/debug
 
     def test_delete(self):
