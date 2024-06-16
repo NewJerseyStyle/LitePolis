@@ -170,11 +170,7 @@ class Users:
             The privilege level of the user (default: 'user').
         uid : int, optional
             The user ID (default: None).
-    
-        Returns
-        -------
-        None
-        """
+            """
         self.data = dict()
         if email:
             self.data['email'] = email
@@ -218,7 +214,7 @@ class Users:
             cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
-        return cursor.fetchone()
+        return cursor.fetchone()[0]
 
     @staticmethod
     def get_user_from_api_key(api_key: str):
@@ -266,14 +262,6 @@ class Users:
         """Creates a new user in the database based on the information provided
         to initialize the instance.
 
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
-
         Examples
         --------
         .. highlight:: python
@@ -299,14 +287,6 @@ class Users:
     def update(self):
         """Updates an existing user in the database based on the information provided
         to initialize the instance.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
 
         Examples
         --------
@@ -344,14 +324,6 @@ class Users:
     
     def delete(self):
         """Deletes a user from the database.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
 
         Notes
         -----
@@ -549,14 +521,6 @@ class Conversations:
         This method executes a SQL query to update an existing conversation.
         The `id` must be present in the `data` attribute of the Conversation object.
         At least one of `title` or `desc` must be present in the `data` attribute to update.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
 
         Examples
         --------
@@ -829,14 +793,6 @@ class Comments:
         This method executes a SQL query to create a new comment in the database.
         It validates the required fields before creating the comment.
 
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
-
         Examples
         --------
         .. highlight:: python
@@ -862,14 +818,6 @@ class Comments:
 
         This method executes a SQL query to update an existing comment in the database.
         It validates the required fields before updating the comment.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
 
         Examples
         --------
@@ -898,14 +846,6 @@ class Comments:
         """Deletes a comment from the database.
 
         This method executes a SQL query to delete a comment from the database.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
 
         Examples
         --------
@@ -976,10 +916,6 @@ class API_Keys:
         user_id : int, optional
             The user ID associated with the API key. Defaults to None.
 
-        Returns
-        -------
-        None
-
         Examples
         --------
         .. highlight:: python
@@ -1024,14 +960,6 @@ class API_Keys:
         It validates the required fields before creating the API key.
         Uses for new user, login, expire and renew.
 
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
-
         Examples
         --------
         .. highlight:: python
@@ -1055,14 +983,6 @@ class API_Keys:
         This method executes a SQL query to update an existing API key in the database.
         It validates the required fields before updating the API key.
 
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
-
         Examples
         --------
         .. highlight:: python
@@ -1071,7 +991,7 @@ class API_Keys:
             api_key.update()
         """
         # validate for update
-        assert 'user_id' in self.user_id
+        assert 'user_id' in self.data
         query = Query.update(self.table) \
                     .set(self.table.API_KEY, self.data['api_key']) \
                     .where(self.table.USER_ID == self.data['user_id'])
@@ -1087,14 +1007,6 @@ class API_Keys:
         It updates the API key in the database, effectively expiring it.
         Default value does not match with UUID pattern which makes it unaccessable while holding
         the place for the user to renew the apikey.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
 
         Examples
         --------
