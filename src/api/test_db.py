@@ -33,7 +33,7 @@ class TestConversations(unittest.TestCase):
         conversation = Conversations(cid=1, creator_id=1,
                                      title='Test Conversation')
         self.assertEqual(conversation.data,
-                         {'id': 1, 'user_id': 1, 'title': 'Test Conversation'})
+                         {'id': 1, 'creator_id': 1, 'title': 'Test Conversation'})
 
     def test_create_and_get_all_conversation(self):
         conversation = Conversations(cid=1, creator_id=1,
@@ -43,14 +43,14 @@ class TestConversations(unittest.TestCase):
         lst = Conversations.get_all_conversation(1)
         self.assertGreater(len(lst), 0)
         self.assertEqual(lst[0][1], 'Test Conversation') # need to check/debug
-        c = Conversations.get_conversation_from_id(1)
+        c = conversation.get_conversation_from_id()
         self.assertEqual(c[1], 'Test Conversation') # need to check/debug
 
     def test_update(self):
         conversation = Conversations(cid=1, creator_id=1,
                                      title='Updated Conversation Title')
         conversation.update()
-        c = Conversations.get_conversation_from_id(1)
+        c = conversation.get_conversation_from_id()
         self.assertEqual(c[1], 'Updated Conversation Title') # need to check/debug
 
     def test_delete(self):
