@@ -30,13 +30,13 @@ class TestUsers(unittest.TestCase):
 
 class TestConversations(unittest.TestCase):
     def test_init(self):
-        conversation = Conversations(conversation_id=1, creator_id=1,
+        conversation = Conversations(cid=1, creator_id=1,
                                      title='Test Conversation')
         self.assertEqual(conversation.data,
-                         {'conversation_id': 1, 'user_id': 1, 'title': 'Test Conversation'})
+                         {'cid': 1, 'user_id': 1, 'title': 'Test Conversation'})
 
     def test_create_and_get_all_conversation(self):
-        conversation = Conversations(conversation_id=1, creator_id=1,
+        conversation = Conversations(cid=1, creator_id=1,
                                      title='Test Conversation',
                                      desc='Test Description')
         conversation.create()
@@ -47,28 +47,28 @@ class TestConversations(unittest.TestCase):
         self.assertEqual(c[1], 'Test Conversation') # need to check/debug
 
     def test_update(self):
-        conversation = Conversations(conversation_id=1, user_id=1, title='Updated Conversation Title')
+        conversation = Conversations(cid=1, user_id=1, title='Updated Conversation Title')
         conversation.update()
         c = Conversations.get_conversation_from_id(1)
         self.assertEqual(c[1], 'Updated Conversation Title') # need to check/debug
 
     def test_delete(self):
-        # conversation = Conversations(conversation_id=1)
+        # conversation = Conversations(cid=1)
         # conversation.delete()
         pass
 
 
 class TestComments(unittest.TestCase):
     def test_init(self):
-        comment = Comments(comment_id=1, user_id=1, comment_text='This is a test comment')
+        comment = Comments(comment_id=1, user_id=1, comment='This is a test comment')
         self.assertEqual(comment.data, {'comment_id': 1, 'user_id': 1,
                                         'comment_text': 'This is a test comment'})
 
     def test_create(self):
         comment = Comments(comment_id=1,
                            user_id=1,
-                           conversation_id=0,
-                           comment_text='This is a test comment')
+                           cid=0,
+                           comment='This is a test comment')
         comment.create()
         self.assertEqual(comment.get_comment_from_id(1), 'This is a test comment')
         lst = comment.get_comments_from_conversation(1)
@@ -90,9 +90,9 @@ class TestComments(unittest.TestCase):
 
     def test_delete(self):
         # comment = Comments(comment_id=1,
-        #                    conversation_id=0,
+        #                    cid=0,
         #                    user_id=1,
-        #                    comment_text='This is a test comment')
+        #                    comment='This is a test comment')
         # comment.delete()
         pass
 
@@ -119,7 +119,7 @@ class TestAPI_Keys(unittest.TestCase):
     def test_expire(self):
         api_key = API_Keys(apikey='my_api_key', user_id=1)
         api_key.expire()
-        self.assertEqual(api_key_old.get_user_id_from_apikey(), None)
+        self.assertEqual(api_key.get_user_id_from_apikey(), None)
 
 if __name__ == '__main__':
     unittest.main()
