@@ -824,24 +824,49 @@ class Comments:
         --------
         .. highlight:: python
         .. code-block:: python
-            comment = Comments(id=1, vote=1)
+            comment = Comments(id=1, moderated=True)
             comment.update()
-
-        Notes
-        -----
-        **NOT IMPLEMENTED YET**
         """
         # validate for update
-        raise NotImplementedError
-        # assert 'id' in self.data
-        # assert 'vote' in self.data
-        # query = Query.update(self.table) \
-        #             .set(self.table.UPVOTE, 1) \
-        #             .where(self.table.ID, self.data['id'])
-        # try:
-        #     cursor.execute(query.get_sql().replace('"', ''))
-        # except mysql.connector.Error as err:
-        #     print("query data failed. {}".format(err))
+        assert 'id' in self.data
+        assert ('vote' in self.data or
+                'moderated' in self.data or
+                'approved' in self.data)
+        query = Query.update(self.table)
+        has_data_for_update = False
+        if 'moderated' in self.data:
+            query = query.set(self.table.MODERATED,
+                              self.data['moderated'])
+            has_data_for_update = True
+        if 'approved' in self.data:
+            query = query.set(self.table.APPROVED,
+                              self.data['approved'])
+            has_data_for_update = True
+        assert has_data_for_update
+        query = query.where(self.table.ID == self.data['id'])
+        try:
+            cursor.execute(query.get_sql().replace('"', ''))
+        except mysql.connector.Error as err:
+            print("query data failed. {}".format(err))
+
+    def approve(self):
+        """Updates an existing comment in the database status approved.
+
+        This method executes a SQL query to update an existing comment in the database.
+        It validates the required fields before updating the comment.
+
+        Examples
+        --------
+        .. highlight:: python
+        .. code-block:: python
+            comment = Comments(id=1)
+            comment.approve()
+        """
+        # validate for update
+        assert 'id' in self.data
+        self.data['moderated'] = True
+        self.data['approved'] = True
+        self.update()
 
     def delete(self):
         """Deletes a comment from the database.
