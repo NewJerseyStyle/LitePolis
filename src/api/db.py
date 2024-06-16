@@ -1040,7 +1040,7 @@ class API_Keys:
             api_key.create()
         """
         # validate for create
-        assert 'user_id' in self.user_id
+        assert 'user_id' in self.data
         query = Query.into(self.table) \
                     .columns(*self.data.keys()) \
                     .insert(*self.data.values())
