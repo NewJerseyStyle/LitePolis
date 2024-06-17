@@ -27,8 +27,8 @@ router = APIRouter()
 async def get_testroute():
     """This endpoint is used to check if the database connection is healthy.
 
-    Returns:
-    --------
+    Returns
+    -------
     dict
         A dictionary containing the status of the database connection.
         - If the connection is healthy, the dictionary will contain
