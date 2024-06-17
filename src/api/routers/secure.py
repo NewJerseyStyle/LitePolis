@@ -2,6 +2,7 @@ import os
 import uuid
 
 from fastapi import APIRouter, Depends, Request
+from fastapi import HTTPException
 
 from auth import get_user
 from db import API_Keys
@@ -9,25 +10,100 @@ from db import Users
 from db import Conversations
 from db import Comments
 
+# tags_metadata 
+# https://fastapi.tiangolo.com/tutorial/metadata/
+
+# from pydantic import BaseModel
+# @app.post("/items/", response_model=ResponseMessage)
+# https://fastapi.tiangolo.com/advanced/generate-clients/
+
 router = APIRouter()
 
 @router.get("/")
 async def get_testroute(user: dict = Depends(get_user)):
-    return {'detail': {
-        'id': user[0],
-        'email': user[1],
-        'role': user[2]
-    }}
+    """This endpoint returns information about the currently authenticated user.
+
+    Parameters
+    ----------
+    user : dict
+        A dictionary containing user information retrieved
+        from the `get_user` dependency. The dictionary is expected
+        to have the following structure:
+        ```
+        {
+            'id': <user_id>,
+            'email': <user_email>,
+            'role': <user_role>
+        }
+        ```
+
+    Returns
+    -------
+    dict
+        A dictionary containing the user's id, email, and role.
+    """
+    return {
+        'detail': {
+            'id': user[0],
+            'email': user[1],
+            'role': user[2]
+        }
+    }
 
 # user CRUD
 @router.get("/users/role")
 async def get_userrole(user: tuple = Depends(get_user)):
-    return {'detail': {
-        'role': user[2]
-    }}
+    """
+    This endpoint returns the role of the currently authenticated user.
+
+    Parameters
+    ----------
+    user : tuple
+        A tuple containing user information retrieved
+        from the `get_user` dependency. The tuple is expected
+        to have the following structure:
+        ```
+        (
+            <user_id>,
+            <user_email>,
+            <user_role>
+        )
+        ```
+
+    Returns
+    -------
+    dict
+        A dictionary containing the user's role.
+    """
+    return {
+        'detail': {
+            'role': user[2]
+        }
+    }
 
 @router.put("/users/renew")
 async def update_usertoken(user: dict = Depends(get_user)):
+    """Updates the API key for the currently authenticated user.
+
+    Parameters
+    ----------
+    user : dict
+        A dictionary containing user information retrieved
+        from the `get_user` dependency. The dictionary is expected
+        to have the following structure:
+        ```
+        {
+            'id': <user_id>,
+            'email': <user_email>,
+            'role': <user_role>
+        }
+        ```
+
+    Returns
+    -------
+    dict
+        A dictionary containing the new API key.
+    """
     api_key_not_updated = True
     while api_key_not_updated:
         new_api_key = str(uuid.uuid4())
@@ -35,9 +111,11 @@ async def update_usertoken(user: dict = Depends(get_user)):
         if api_keys.get_user_id_from_apikey() is None:
             api_keys.update()
             api_key_not_updated = False
-    return {'detail': {
-        'key': new_api_key
-    }}
+    return {
+        'detail': {
+            'key': new_api_key
+        }
+    }
 
 if os.environ['ui'] == 'streamlit':
     @router.get("/users/auth")
@@ -47,12 +125,42 @@ if os.environ['ui'] == 'streamlit':
 
 @router.get("/users/profile")
 async def get_userprofile(user: dict = Depends(get_user)):
-    return user[1]
+    """This endpoint returns information about the currently authenticated user.
+
+    Parameters
+    ----------
+    user : dict
+        A dictionary containing user information retrieved
+        from the `get_user` dependency. The dictionary is expected
+        to have the following structure:
+        ```
+        {
+            'id': <user_id>,
+            'email': <user_email>,
+            'role': <user_role>
+        }
+        ```
+
+    Returns
+    -------
+    dict
+        A dictionary containing the user's id, email, and role.
+    """
+    return {
+        'detail': {
+            'id': user[0],
+            'email': user[1],
+            'role': user[2]
+        }
+    }
 
 @router.post("/users/profile")
 async def create_userprofile(request: Request,
                              user: dict = Depends(get_user)):
+    if False:
+        raise HTTPException(status_code=401, detail="Unauthorized")
     request_body = await request.json()
+    # sanitization!
     new_record = Users(**request_body)
     new_record.create()
 
@@ -99,12 +207,14 @@ async def delete_conversation(cid: int,
     record.delete()
 
 # CURD of comments
-@router.get("/comments/random")
-async def get_comment(user: dict = Depends(get_user)):
+@router.get("/comments/{cid}/random")
+async def get_comment(cid: int,
+                      user: dict = Depends(get_user)):
     return user
 
-@router.get("/comments/moderate")
+@router.get("/comments/{cid}/moderate")
 async def get_comments(user: dict = Depends(get_user)):
+    # waiting to be moderated comments if conversation moderation enabled
     return user
 
 @router.post("/comments/")
@@ -119,6 +229,7 @@ async def update_comment(request: Request,
                          user: dict = Depends(get_user)):
     request_body = await request.json()
     new_record = Comments(**request_body)
+    # or type can be approve
     new_record.update()
 
 @router.delete("/comments/{cid}")
