@@ -214,7 +214,7 @@ class Users:
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
         result = cursor.fetchone()
-        return result if result is None else result[0]
+        return result if result is None else {"id": result[0]}
 
     @staticmethod
     def get_user_from_api_key(api_key: str):
@@ -256,7 +256,12 @@ class Users:
             cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
-        return cursor.fetchone()
+        data = cursor.fetchone()
+        return {
+            "id": data[0],
+            "email": data[1],
+            "role": data[2]
+        }
 
     def create(self):
         """Creates a new user in the database based on the information provided
@@ -458,7 +463,16 @@ class Conversations:
             cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
-        return cursor.fetchall()
+        data = []
+        for record in cursor.fetchall():
+            data.append({
+                "id": record[0],
+                "title": record[1],
+                "description": record[2],
+                "creator_id": record[3],
+                # "moderation": record[4]
+            })
+        return data
 
     def get_conversation_from_id(self):
         """Retrieves a conversation by ID.
@@ -486,7 +500,14 @@ class Conversations:
             cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
-        return cursor.fetchone()
+        record = cursor.fetchone()
+        return {
+            "id": record[0],
+            "title": record[1],
+            "description": record[2],
+            "creator_id": record[3],
+            # "moderation": record[4]
+        }
     
     def create(self):
         """Creates a new conversation.
@@ -693,7 +714,16 @@ class Comments:
             cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
-        return cursor.fetchone()
+        record = cursor.fetchone()
+        return {
+            "id": record[0],
+            "create_data": record[1],
+            "comment": record[2],
+            "user_id": record[3],
+            "conversation_id": record[4],
+            "moderated": record[5],
+            "approved": record[6],
+        }
 
     def get_comments_from_conversation(self):
         """Retrieves comments from a conversation.
@@ -749,7 +779,18 @@ class Comments:
             cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
-        return cursor.fetchall()
+        data = []
+        for record in cursor.fetchall():
+            data.append({
+                "id": record[0],
+                "create_data": record[1],
+                "comment": record[2],
+                "user_id": record[3],
+                "conversation_id": record[4],
+                "moderated": record[5],
+                "approved": record[6],
+            })
+        return data
 
     def get_comments_waiting_for_moderate(self):
         """Retrieves comments from a conversation that are waiting for moderation.
@@ -785,7 +826,18 @@ class Comments:
             cursor.execute(query.get_sql().replace('"', ''))
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
-        return cursor.fetchall()
+        data = []
+        for record in cursor.fetchall():
+            data.append({
+                "id": record[0],
+                "create_data": record[1],
+                "comment": record[2],
+                "user_id": record[3],
+                "conversation_id": record[4],
+                "moderated": record[5],
+                "approved": record[6],
+            })
+        return data
 
     def create(self):
         """Creates a new comment in the database.
@@ -999,7 +1051,7 @@ class API_Keys:
             print("query data failed. {}".format(err))
         # get the first element of tuple (1,)
         result = cursor.fetchone()
-        return result if result is None else result[0]
+        return result if result is None else {"id": result[0]}
 
     def create(self):
         """Creates a new API key in the database.
