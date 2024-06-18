@@ -51,6 +51,7 @@ Notes
 """
 
 import os
+import datetime
 import mysql.connector
 from pypika import Query, Table
 
@@ -214,7 +215,7 @@ class Users:
         except mysql.connector.Error as err:
             print("query data failed. {}".format(err))
         result = cursor.fetchone()
-        return result if result is None else {"id": result[0]}
+        return result if result is None else result[0]
 
     @staticmethod
     def get_user_from_api_key(api_key: str):
@@ -229,8 +230,8 @@ class Users:
 
         Returns
         -------
-        tuple
-            A tuple containing the user's ID, email, and privilege level
+        dict
+            A dictionary containing the user's "id", "email", and "role"
             if database retrieval is successful, otherwise return `None`.
 
         Examples
@@ -239,7 +240,7 @@ class Users:
         .. code-block:: python
             api_key = "my_secret_api_key"
             user_info = Users.get_user_from_api_key(api_key)
-            print(user_info)  # Output: (1, "john.doe@example.com", "user")
+            print(user_info)  # Output: {"id": 1, "email": "john.doe@example.com", "role": "user"}
 
         Notes
         -----
@@ -453,6 +454,14 @@ class Conversations:
             conversations = Conversations.get_all_conversation(user_email="john.doe@example.com")
             for conversation in conversations:
                 print(conversation)
+            # [
+            #     {
+            #         "id": 1,
+            #         "title": "Test conversation",
+            #         "description": "A demo",
+            #         "creator_id": 1,
+            #     }
+            # ]
         """
         if user_id is None:
             assert user_email
@@ -482,8 +491,9 @@ class Conversations:
 
         Returns
         -------
-        tuple
-            A tuple containing the conversation data.
+        dict
+            A dictionary containing the conversation data 
+            ("id", "title", "description", "creator_id").
 
         Examples
         --------
@@ -492,6 +502,12 @@ class Conversations:
             conversation = Conversations(cid=1)
             conversation_data = conversation.get_conversation_from_id()
             print(conversation_data)
+            # {
+            #     "id": 1,
+            #     "title": "Test conversation",
+            #     "description": "A demo",
+            #     "creator_id": 1,
+            # }
         """
         assert 'id' in self.data
         query = Query.from_(self.table).select('*') \
@@ -697,8 +713,11 @@ class Comments:
 
         Returns
         -------
-        tuple
-            A tuple containing the comment data.
+        dict
+            A dictionary object containing the comment data.
+            Keys including ("id", "create_date", "comment",
+            "user_id", "conversation_id", "moderated", "approved")
+        }
 
         Examples
         --------
@@ -706,7 +725,10 @@ class Comments:
         .. code-block:: python
             comment = Comments.get_comment_from_id(1)
             print(comment)
-            # (1, 'Hello, world!', 1, 1, False)
+            # {"id": 1, "create_date": "2012-11-15 00:00:00",
+            #  "comment": 'Hello, world!', "user_id": 1,
+            #  "conversation_id": 1, "moderated": False,
+            #  "approved": False)
         """
         query = Query.from_(Comments.table).select('*') \
                     .where(Comments.table.ID == comment_id)
@@ -717,7 +739,7 @@ class Comments:
         record = cursor.fetchone()
         return {
             "id": record[0],
-            "create_data": record[1],
+            "create_date": record[1],
             "comment": record[2],
             "user_id": record[3],
             "conversation_id": record[4],
@@ -729,13 +751,13 @@ class Comments:
         """Retrieves comments from a conversation.
 
         This method executes a SQL query to retrieve comments from a conversation.
-        It returns a list of tuples containing the comment data.
+        It returns a list of dictionaries containing the comment data.
         The query can be filtered by moderated or random flags.
 
         Returns
         -------
         list
-            A list of tuples containing the comment data.
+            A list of dict containing the comment data.
 
         Examples
         --------
@@ -745,9 +767,15 @@ class Comments:
             comments = comment.get_comments_from_conversation()
             for comment in comments:
                 print(comment)
-            # (1, 'Comment 1', 1, 1, True)
-            # (2, 'Comment 2', 1, 1, True)
-            # (3, 'Comment 3', 1, 1, True)
+            # {"id": 1, "create_date": "2014-01-24", "comment": 'Comment 1!',
+            #  "user_id": 1, "conversation_id": 1, "moderated": False,
+            #  "approved": False)
+            # {"id": 2, "create_date": "2014-09-25", "comment": 'Comment 2!',
+            #  "user_id": 1, "conversation_id": 1, "moderated": False,
+            #  "approved": False)
+            # {"id": 3, "create_date": "2014-11-26", "comment": 'Comment 3!',
+            #  "user_id": 1, "conversation_id": 1, "moderated": False,
+            #  "approved": False)
 
             
         .. highlight:: python
@@ -756,9 +784,15 @@ class Comments:
             comments = comment.get_comments_from_conversation()
             for comment in comments:
                 print(comment)
-            # (3, 'Comment 3', 1, 1, True)
-            # (1, 'Comment 1', 1, 1, True)
-            # (2, 'Comment 2', 1, 1, True)
+            # {"id": 2, "create_date": "2014-09-25", "comment": 'Comment 2!',
+            #  "user_id": 1, "conversation_id": 1, "moderated": False,
+            #  "approved": False)
+            # {"id": 3, "create_date": "2014-11-26", "comment": 'Comment 3!',
+            #  "user_id": 1, "conversation_id": 1, "moderated": False,
+            #  "approved": False)
+            # {"id": 1, "create_date": "2014-01-24", "comment": 'Comment 1!',
+            #  "user_id": 1, "conversation_id": 1, "moderated": False,
+            #  "approved": False)
         """
         assert 'moderated' in self.data
         assert 'random' in self.data
@@ -783,7 +817,7 @@ class Comments:
         for record in cursor.fetchall():
             data.append({
                 "id": record[0],
-                "create_data": record[1],
+                "create_date": record[1],
                 "comment": record[2],
                 "user_id": record[3],
                 "conversation_id": record[4],
@@ -802,7 +836,7 @@ class Comments:
         Returns
         -------
         list
-            A list of tuples containing the comment data.
+            A list of dict containing the comment data.
 
         Examples
         --------
@@ -812,9 +846,15 @@ class Comments:
             comments = comment.get_comments_waiting_for_moderate()
             for comment in comments:
                 print(comment)
-            # (1, 'Comment 1', 1, 1, False)
-            # (2, 'Comment 2', 1, 1, False)
-            # (3, 'Comment 3', 1, 1, False)
+            # {"id": 1, "create_date": "2014-01-24", "comment": 'Comment 1!',
+            #  "user_id": 1, "conversation_id": 1, "moderated": False,
+            #  "approved": False)
+            # {"id": 2, "create_date": "2014-09-25", "comment": 'Comment 2!',
+            #  "user_id": 1, "conversation_id": 1, "moderated": False,
+            #  "approved": False)
+            # {"id": 3, "create_date": "2014-11-26", "comment": 'Comment 3!',
+            #  "user_id": 1, "conversation_id": 1, "moderated": False,
+            #  "approved": False)
         """
         # get comments in conversation that is not moderated before
         assert 'conversation_id' in self.data
@@ -830,7 +870,7 @@ class Comments:
         for record in cursor.fetchall():
             data.append({
                 "id": record[0],
-                "create_data": record[1],
+                "create_date": record[1],
                 "comment": record[2],
                 "user_id": record[3],
                 "conversation_id": record[4],
@@ -858,6 +898,7 @@ class Comments:
         assert 'conversation_id' in self.data
         column = self.table.CONVERSATION_ID
         data = dict([(k, v) for k, v in self.data.items() if k not in ['random']])
+        data['CREATE_DATE'] = str(datetime.datetime.now())
         query = Query.into(self.table) \
                     .columns(*data.keys()) \
                     .insert(*data.values())
@@ -1051,7 +1092,7 @@ class API_Keys:
             print("query data failed. {}".format(err))
         # get the first element of tuple (1,)
         result = cursor.fetchone()
-        return result if result is None else {"id": result[0]}
+        return result if result is None else result[0]
 
     def create(self):
         """Creates a new API key in the database.
