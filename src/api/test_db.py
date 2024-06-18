@@ -14,13 +14,13 @@ class TestUsers(unittest.TestCase):
     def test_create(self):
         user = Users("john.doe@example.com", "mysecretpassword", "user", 1)
         user.create()
-        self.assertEqual(Users.get_user_id_from_email("john.doe@example.com"), {"id": 1})
+        self.assertEqual(Users.get_user_id_from_email("john.doe@example.com"), 1)
 
     def test_update(self):
         user = Users("john.doe.newemail@example.com", "mynewpassword", "user", 1)
         user.update()
         self.assertEqual(Users.get_user_id_from_email("john.doe@example.com"), None)
-        self.assertEqual(Users.get_user_id_from_email("john.doe.newemail@example.com"), {"id": 1})
+        self.assertEqual(Users.get_user_id_from_email("john.doe.newemail@example.com"), 1)
 
     def test_delete(self):
         user = Users("john.doe@example.com")
@@ -112,13 +112,13 @@ class TestAPI_Keys(unittest.TestCase):
         api_key = API_Keys(apikey='my_api_key', user_id=1)
         api_key.create()
         # verify that the API key is created in the database
-        self.assertEqual(api_key.get_user_id_from_apikey(), {"id": 1})
+        self.assertEqual(api_key.get_user_id_from_apikey(), 1)
 
     def test_update(self):
         api_key = API_Keys(apikey='my_api_key2', user_id=1)
         api_key.update()
         # verify that the API key is updated in the database
-        self.assertEqual(api_key.get_user_id_from_apikey(), {"id": 1})
+        self.assertEqual(api_key.get_user_id_from_apikey(), 1)
         api_key_old = API_Keys(apikey='my_api_key', user_id=1)
         self.assertEqual(api_key_old.get_user_id_from_apikey(), None)
 
