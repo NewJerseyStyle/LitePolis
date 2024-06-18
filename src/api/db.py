@@ -868,6 +868,25 @@ class Comments:
         self.data['approved'] = True
         self.update()
 
+    def reject(self):
+        """Updates an existing comment in the database status rejected.
+
+        This method executes a SQL query to update an existing comment in the database.
+        It validates the required fields before updating the comment.
+
+        Examples
+        --------
+        .. highlight:: python
+        .. code-block:: python
+            comment = Comments(id=1)
+            comment.approve()
+        """
+        # validate for update
+        assert 'id' in self.data
+        self.data['moderated'] = True
+        self.data['approved'] = False
+        self.update()
+
     def delete(self):
         """Deletes a comment from the database.
 
