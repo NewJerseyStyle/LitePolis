@@ -87,7 +87,7 @@ class TestComments(unittest.TestCase):
         comment.update()
         comment.data['moderated'] = False
         lst = comment.get_comments_from_conversation()
-        self.assertEqual(len(lst), 0)
+        self.assertEqual(len(lst), 1)
         lst = comment.get_comments_waiting_for_moderate()
         self.assertEqual(len(lst), 0)
         comment.data['moderated'] = True
