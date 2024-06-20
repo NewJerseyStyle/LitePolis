@@ -12,8 +12,24 @@ from db import Users
 from db import Conversations
 from db import Comments
 
-# tags_metadata 
-# https://fastapi.tiangolo.com/tutorial/metadata/
+tags_metadata = [
+    {
+        "name": "User",
+        "description": "Operations related to the currently authenticated user",
+    },
+    {
+        "name": "API Keys",
+        "description": "Operations related to API keys",
+    },
+    {
+        "name": "Conversations",
+        "description": "Operations related to conversations",
+    },
+    {
+        "name": "Comments",
+        "description": "Operations related to comments",
+    }
+]
 
 # from pydantic import BaseModel
 # @app.post("/items/", response_model=ResponseMessage)
@@ -21,7 +37,7 @@ from db import Comments
 
 router = APIRouter()
 
-@router.get("/")
+@router.get("/", tags=["User"])
 async def get_testroute(user: dict = Depends(get_user)):
     """This endpoint returns information about the currently authenticated user.
 
@@ -53,24 +69,23 @@ async def get_testroute(user: dict = Depends(get_user)):
     }
 
 # user CRUD
-@router.get("/users/role")
+@router.get("/users/role", tags=["User"])
 async def get_userrole(user: tuple = Depends(get_user)):
     """
     This endpoint returns the role of the currently authenticated user.
 
     Parameters
     ----------
-    user : tuple
-        A tuple containing user information retrieved
+    user : dict
+        A dictionary containing user information retrieved
         from the `get_user` dependency from `auth` module.
-        The tuple is expected to have the following structure:
+        The dictionary is expected to have the following structure:
         ```
-        (
-            <user_id>,
-            <user_email>,
-            <user_role>
-        )
-        ```
+        {
+            'id': <user_id>,
+            'email': <user_email>,
+            'role': <user_role>
+        }
 
     Returns
     -------
@@ -83,7 +98,7 @@ async def get_userrole(user: tuple = Depends(get_user)):
         }
     }
 
-@router.put("/users/renew")
+@router.put("/users/renew", tags=["User", "API Keys"])
 async def update_usertoken(user: dict = Depends(get_user)):
     """Updates the API key for the currently authenticated user.
 
@@ -121,12 +136,12 @@ async def update_usertoken(user: dict = Depends(get_user)):
     }
 
 if os.environ['ui'] == 'streamlit':
-    @router.get("/users/auth")
+    @router.get("/users/auth") # hidden for streamlit before beta version
     async def get_userauth(user: dict = Depends(get_user)):
         # collect all user password pair for streamlit auth
         return {'detail': 'useryaml'}
 
-@router.get("/users/profile")
+@router.get("/users/profile", tags=["User"])
 async def get_userprofile(user: dict = Depends(get_user)):
     """This endpoint returns information about the currently authenticated user.
 
@@ -158,7 +173,7 @@ async def get_userprofile(user: dict = Depends(get_user)):
         }
     }
 
-@router.post("/users/profile")
+@router.post("/users/profile", tags=["User"])
 async def create_userprofile(request: Request,
                              user: dict = Depends(get_user)):
     request_body = await request.json()
@@ -183,7 +198,7 @@ async def create_userprofile(request: Request,
     new_record = Users(**data)
     new_record.create()
 
-@router.put("/users/profile")
+@router.put("/users/profile", tags=["User"])
 async def update_userprofile(request: Request,
                              user: dict = Depends(get_user)):
     if user['role'] != 'user' or user['role'] != 'root':
@@ -199,25 +214,25 @@ async def update_userprofile(request: Request,
     new_record = Users(**data)
     new_record.update()
 
-@router.delete("/users/profile")
+@router.delete("/users/profile", tags=["User"])
 async def delete_userprofile(user: dict = Depends(get_user)):
     raise HTTPException(status_code=403, detail="Method Not Allowed")
     # raise HTTPException(status_code=501, detail="Not Implemented")
 
 # CURD of conversation
-@router.get("/conversations/all")
+@router.get("/conversations/all", tags=["Conversations"])
 async def get_all_conversations(user: dict = Depends(get_user)):
     return {
         'detail': Conversations.get_all_conversation(user['id'])
     }
 
-@router.get("/conversations/{cid}")
+@router.get("/conversations/{cid}", tags=["Conversations"])
 async def get_conversation(cid: int,
                            user: dict = Depends(get_user)):
     record = Conversations(cid=cid)
     return record.get_conversation_from_id()
 
-@router.post("/conversations")
+@router.post("/conversations", tags=["Conversations"])
 async def create_conversation(request: Request,
                               user: dict = Depends(get_user)):
     if user['role'] != 'user':
@@ -235,7 +250,7 @@ async def create_conversation(request: Request,
     new_record = Conversations(**data)
     new_record.create()
 
-@router.put("/conversations")
+@router.put("/conversations", tags=["Conversations"])
 async def update_conversation(request: Request,
                               user: dict = Depends(get_user)):
     request_body = await request.json()
@@ -247,7 +262,7 @@ async def update_conversation(request: Request,
     new_record = Conversations(**data)
     new_record.update()
 
-@router.delete("/conversations/{cid}")
+@router.delete("/conversations/{cid}", tags=["Conversations"])
 async def delete_conversation(cid: int,
                               user: dict = Depends(get_user)):
     raise HTTPException(status_code=403, detail="Method Not Allowed")
@@ -256,7 +271,7 @@ async def delete_conversation(cid: int,
     # record.delete()
 
 # CURD of comments
-@router.get("/comments/{cid}/")
+@router.get("/comments/{cid}/", tags=["Comments"])
 async def get_comment(cid: int,
                       random: bool = False,
                       moderated: bool = False,
@@ -266,7 +281,7 @@ async def get_comment(cid: int,
                        moderated=moderated)
     return {'detail': comment.get_comments_from_conversation()}
 
-@router.get("/comments/{cid}/moderate")
+@router.get("/comments/{cid}/moderate", tags=["Comments"])
 async def get_comments(cid: int, user: dict = Depends(get_user)):
     # waiting to be moderated comments if conversation moderation enabled
     record = Conversations(cid=cid)
@@ -275,7 +290,7 @@ async def get_comments(cid: int, user: dict = Depends(get_user)):
         comment = Comments(conversation_id=cid)
         return {'detail': comment.get_comments_waiting_for_moderate()}
 
-@router.post("/comments/")
+@router.post("/comments/", tags=["Comments"])
 async def create_comment(request: Request,
                          user: dict = Depends(get_user)):
     if user['role'] != 'user':
@@ -297,7 +312,7 @@ async def create_comment(request: Request,
     new_record = Comments(**data)
     new_record.create()
 
-@router.put("/comments/")
+@router.put("/comments/", tags=["Comments"])
 async def update_comment(request: Request,
                          user: dict = Depends(get_user)):
     if user['role'] != 'user':
@@ -320,7 +335,7 @@ async def update_comment(request: Request,
     else:
         record.update()
 
-@router.delete("/comments/{cid}")
+@router.delete("/comments/{cid}", tags=["Comments"])
 async def delete_comment(cid: int,
                          user: dict = Depends(get_user)):
     raise HTTPException(status_code=403, detail="Method Not Allowed")
