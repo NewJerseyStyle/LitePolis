@@ -29,8 +29,8 @@ async def get_testroute(user: dict = Depends(get_user)):
     ----------
     user : dict
         A dictionary containing user information retrieved
-        from the `get_user` dependency. The dictionary is expected
-        to have the following structure:
+        from the `get_user` dependency from `auth` module.
+        The dictionary is expected to have the following structure:
         ```
         {
             'id': <user_id>,
@@ -46,9 +46,9 @@ async def get_testroute(user: dict = Depends(get_user)):
     """
     return {
         'detail': {
-            'id': user[0],
-            'email': user[1],
-            'role': user[2]
+            'id': user['id'],
+            'email': user['email'],
+            'role': user['role']
         }
     }
 
@@ -62,8 +62,8 @@ async def get_userrole(user: tuple = Depends(get_user)):
     ----------
     user : tuple
         A tuple containing user information retrieved
-        from the `get_user` dependency. The tuple is expected
-        to have the following structure:
+        from the `get_user` dependency from `auth` module.
+        The tuple is expected to have the following structure:
         ```
         (
             <user_id>,
@@ -79,7 +79,7 @@ async def get_userrole(user: tuple = Depends(get_user)):
     """
     return {
         'detail': {
-            'role': user[2]
+            'role': user['role']
         }
     }
 
@@ -91,7 +91,8 @@ async def update_usertoken(user: dict = Depends(get_user)):
     ----------
     user : dict
         A dictionary containing user information retrieved
-        from the `get_user` dependency. The dictionary is expected
+        from the `get_user` dependency from `auth` module.
+        The dictionary is expected
         to have the following structure:
         ```
         {
@@ -133,7 +134,8 @@ async def get_userprofile(user: dict = Depends(get_user)):
     ----------
     user : dict
         A dictionary containing user information retrieved
-        from the `get_user` dependency. The dictionary is expected
+        from the `get_user` dependency from `auth` module.
+        The dictionary is expected
         to have the following structure:
         ```
         {
@@ -150,9 +152,9 @@ async def get_userprofile(user: dict = Depends(get_user)):
     """
     return {
         'detail': {
-            'id': user[0],
-            'email': user[1],
-            'role': user[2]
+            'id': user['id'],
+            'email': user['email'],
+            'role': user['role']
         }
     }
 
@@ -184,11 +186,11 @@ async def create_userprofile(request: Request,
 @router.put("/users/profile")
 async def update_userprofile(request: Request,
                              user: dict = Depends(get_user)):
-    if user[2] != 'user' or user[2] != 'root':
+    if user['role'] != 'user' or user['role'] != 'root':
         raise HTTPException(status_code=401, detail="Unauthorized")
     request_body = await request.json()
     data = dict()
-    data['id'] = user[0]
+    data['id'] = user['id']
     if 'email' in request_body:
         data['email'] = request_body['email']
     if 'password' in request_body:
@@ -205,11 +207,8 @@ async def delete_userprofile(user: dict = Depends(get_user)):
 # CURD of conversation
 @router.get("/conversations/all")
 async def get_all_conversations(user: dict = Depends(get_user)):
-    data = []
-    for con in Conversations.get_all_conversation(user[0]):
-        data.append(con.data)
     return {
-        'detail': data
+        'detail': Conversations.get_all_conversation(user['id'])
     }
 
 @router.get("/conversations/{cid}")
@@ -221,7 +220,7 @@ async def get_conversation(cid: int,
 @router.post("/conversations")
 async def create_conversation(request: Request,
                               user: dict = Depends(get_user)):
-    if user[2] != 'user':
+    if user['role'] != 'user':
         raise HTTPException(status_code=401, detail="Unauthorized")
     request_body = await request.json()
     data = {'creator_id': user[0]}
@@ -279,7 +278,7 @@ async def get_comments(cid: int, user: dict = Depends(get_user)):
 @router.post("/comments/")
 async def create_comment(request: Request,
                          user: dict = Depends(get_user)):
-    if user[2] != 'user':
+    if user['role'] != 'user':
         raise HTTPException(status_code=401, detail="Unauthorized")
     request_body = await request.json()
     data = dict()
@@ -301,7 +300,7 @@ async def create_comment(request: Request,
 @router.put("/comments/")
 async def update_comment(request: Request,
                          user: dict = Depends(get_user)):
-    if user[2] != 'user':
+    if user['role'] != 'user':
         raise HTTPException(status_code=401, detail="Unauthorized")
     request_body = await request.json()
     data = dict()
