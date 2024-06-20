@@ -43,7 +43,7 @@ class TestConversations(unittest.TestCase):
         lst = Conversations.get_all_conversation(1)
         self.assertGreater(len(lst), 0)
         self.assertEqual(lst[0]["title"], 'Test Conversation')
-        conversation = Conversations(cid=lst[0][0],
+        conversation = Conversations(cid=lst[0]["id"],
                                      creator_id=1,
                                      title='Updated Conversation Title')
         c = conversation.get_conversation_from_id()
