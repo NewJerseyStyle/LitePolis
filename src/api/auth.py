@@ -46,8 +46,8 @@ def get_user(api_key_header: str = Security(api_key_header)):
 
     Returns
     -------
-    tuple
-        A tuple object contain (ID, EMAIL, PRIVILEGE)
+    dict
+        A dictionary object contain keys ("id", "email", "role")
         if successful, None otherwise.
 
     Notes
