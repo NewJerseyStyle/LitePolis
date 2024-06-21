@@ -2,9 +2,10 @@ import os
 import re
 import uuid
 import hashlib
+from typing import List, Union
 
-from pydantic import BaseModel
-from fastapi import APIRouter, Depends, Request
+from pydantic import BaseModel, EmailStr
+from fastapi import APIRouter, Depends
 from fastapi import HTTPException
 
 from auth import get_user
@@ -32,27 +33,61 @@ tags_metadata = [
     }
 ]
 
-# @app.post("/items/", response_model=ResponseMessage)
-# https://fastapi.tiangolo.com/advanced/generate-clients/
 class UserProfile(BaseModel):
-    email: str = None
-    password: str = None
+    email: EmailStr | None = None
+    password: str | None = None
 
 class ConversationModel(BaseModel):
-    title: str = None
-    description: str = None
+    title: str | None = None
+    description: str | None = None
 
 class CommentModel(BaseModel):
-    comment_id: int = None
-    comment: str = None
-    user_id: int = None
-    conversation_id: int = None
-    task: str = None
-    vote: int = None
+    comment_id: int | None = None
+    comment: str | None = None
+    user_id: int | None = None
+    conversation_id: int | None = None
+    task: str | None = None
+    vote: int | None = None
+
+class UserResponseMessage(BaseModel):
+    id: int
+    email: str
+    role: str
+    
+class ConversationResponseMessage(BaseModel):
+    id: int
+    title: str
+    description: str
+    creator_id: int
+    moderation: bool | None = None
+
+class CommentResponseMessage(BaseModel):
+    id: int
+    create_date: str
+    comment: str
+    user_id: int
+    conversation_id: int
+    moderated: bool = False
+    approved: bool = False
+
+class ResponseMessage(BaseModel):
+    detail: Union[str,
+                  UserResponseMessage,
+                  ConversationResponseMessage,
+                  CommentResponseMessage]
+    error: str | None = None
+    message: str | None = None
+    status_code: int = 200
+
+class ConversationResponse(ResponseMessage):
+    detail: str | List[ConversationResponseMessage]
+    
+class CommentResponse(ResponseMessage):
+    detail: str | List[CommentResponseMessage]
 
 router = APIRouter()
 
-@router.get("/", tags=["User"])
+@router.get("/", tags=["User"], response_model=ResponseMessage)
 async def get_testroute(user: dict = Depends(get_user)):
     """This endpoint returns information about the currently authenticated user.
 
@@ -72,19 +107,20 @@ async def get_testroute(user: dict = Depends(get_user)):
 
     Returns
     -------
-    dict
-        A dictionary containing the user's id, email, and role.
+    ResponseMessage
+        `detail` is `UserResponseMessage` containing the user's id, email, and role.
     """
-    return {
-        'detail': {
-            'id': user['id'],
-            'email': user['email'],
-            'role': user['role']
-        }
-    }
+    return ResponseMessage(
+        message="User information",
+        detail=UserResponseMessage(
+            id=user['id'],
+            email=user['email'],
+            role=user['role']
+        )
+    )
 
 # user CRUD
-@router.get("/users/role", tags=["User"])
+@router.get("/users/role", tags=["User"], response_model=ResponseMessage)
 async def get_userrole(user: tuple = Depends(get_user)):
     """
     This endpoint returns the role of the currently authenticated user.
@@ -104,16 +140,17 @@ async def get_userrole(user: tuple = Depends(get_user)):
 
     Returns
     -------
-    dict
-        A dictionary containing the user's role.
+    ResponseMessage
+        `detail` string of the user's role.
     """
-    return {
-        'detail': {
-            'role': user['role']
-        }
-    }
+    return ResponseMessage(
+        message="User information",
+        detail=user['role']
+    )
 
-@router.put("/users/renew", tags=["User", "API Keys"])
+@router.put("/users/renew",
+            tags=["User", "API Keys"],
+            response_model=ResponseMessage)
 async def update_usertoken(user: dict = Depends(get_user)):
     """Updates the API key for the currently authenticated user.
 
@@ -134,8 +171,8 @@ async def update_usertoken(user: dict = Depends(get_user)):
 
     Returns
     -------
-    dict
-        A dictionary containing the new API key.
+    ResponseMessage
+        `detail` is the string of the new API key.
     """
     api_key_not_updated = True
     while api_key_not_updated:
@@ -144,11 +181,8 @@ async def update_usertoken(user: dict = Depends(get_user)):
         if api_keys.get_user_id_from_apikey() is None:
             api_keys.update()
             api_key_not_updated = False
-    return {
-        'detail': {
-            'key': new_api_key
-        }
-    }
+    return ResponseMessage(message='New API Key',
+                           detail=new_api_key)
 
 if os.environ['ui'] == 'streamlit':
     @router.get("/users/auth") # hidden for streamlit before beta version
@@ -156,7 +190,7 @@ if os.environ['ui'] == 'streamlit':
         # collect all user password pair for streamlit auth
         return {'detail': 'useryaml'}
 
-@router.get("/users/profile", tags=["User"])
+@router.get("/users/profile", tags=["User"], response_model=ResponseMessage)
 async def get_userprofile(user: dict = Depends(get_user)):
     """This endpoint returns information about the currently authenticated user.
 
@@ -177,16 +211,17 @@ async def get_userprofile(user: dict = Depends(get_user)):
 
     Returns
     -------
-    dict
-        A dictionary containing the user's id, email, and role.
+    ResponseMessage
+        `detail` is `UserResponseMessage` containing the user's id, email, and role.
     """
-    return {
-        'detail': {
-            'id': user['id'],
-            'email': user['email'],
-            'role': user['role']
-        }
-    }
+    return ResponseMessage(
+        message="User information",
+        detail=UserResponseMessage(
+            id=user['id'],
+            email=user['email'],
+            role=user['role']
+        )
+    )
 
 @router.post("/users/profile", tags=["User"])
 async def create_userprofile(user_profile: UserProfile,
@@ -203,8 +238,6 @@ async def create_userprofile(user_profile: UserProfile,
     # Validation
     if None  in [user_profile.email, user_profile.password]:
         raise HTTPException(status_code=400, detail="Invalid password")
-    if not re.match(r"'[^@]+@[^@]+\.[^@]+'", user_profile.email):
-        raise HTTPException(status_code=400, detail="Invalid email")
     # Sanitization
     data = {
         'email': user_profile.email,
@@ -242,7 +275,8 @@ async def delete_userprofile(user: dict = Depends(get_user)):
     # raise HTTPException(status_code=501, detail="Not Implemented")
 
 # CURD of conversation
-@router.get("/conversations/all", tags=["Conversations"])
+@router.get("/conversations/all", tags=["Conversations"],
+            response_model=ConversationResponse)
 async def get_all_conversations(user: dict = Depends(get_user)):
     """Get all conversations for the authenticated user.
 
@@ -251,11 +285,17 @@ async def get_all_conversations(user: dict = Depends(get_user)):
     dict
         A dictionary containing all conversations for the user.
     """
-    return {
-        'detail': Conversations.get_all_conversation(user['id'])
-    }
+    return ConversationResponse(
+        message='List of conversation configurations',
+        detail=[ConversationResponseMessage(id=record["id"],
+                                            title=record["title"],
+                                            description=record["description"],
+                                            creator_id=record["creator_id"])
+                for record in Conversations.get_all_conversation(user['id'])]
+    )
 
-@router.get("/conversations/{cid}", tags=["Conversations"])
+@router.get("/conversations/{cid}", tags=["Conversations"],
+            response_model=ResponseMessage)
 async def get_conversation(cid: int,
                            user: dict = Depends(get_user)):
     """Get a conversation by ID.
@@ -266,7 +306,14 @@ async def get_conversation(cid: int,
         A dictionary containing the conversation details.
     """
     record = Conversations(cid=cid)
-    return record.get_conversation_from_id()
+    record = record.get_conversation_from_id()
+    return ResponseMessage(
+        message='Conversation configurations',
+        detail=ConversationResponseMessage(id=record["id"],
+                                           title=record["title"],
+                                           description=record["description"],
+                                           creator_id=record["creator_id"])
+    )
 
 @router.post("/conversations", tags=["Conversations"])
 async def create_conversation(create_conversation: ConversationModel,
@@ -318,11 +365,30 @@ async def delete_conversation(cid: int,
     # record.delete()
 
 # CURD of comments
-@router.get("/comments/{cid}/", tags=["Comments"])
-async def get_comment(cid: int,
-                      random: bool = False,
-                      moderated: bool = False,
-                      user: dict = Depends(get_user)):
+@router.get("/comments/{cid}/", tags=["Comments"],
+            response_model=CommentResponse)
+async def get_comments(cid: int,
+                       random: bool = True,
+                       moderated: bool = False,
+                       user: dict = Depends(get_user)):
+    comment = Comments(conversation_id=cid,
+                       random=random,
+                       moderated=moderated)
+    return CommentResponse(
+        message='List of Comments in the conversation',
+        detail=[CommentResponseMessage(id=record['id'],
+                                       create_date=record['create_date'],
+                                       comment=record['comment'],
+                                       user_id=record['user_id'],
+                                       conversation_id=record['conversation_id'],
+                                       moderated=record['moderated'],
+                                       approved=record['approved'])
+                for record in comment.get_comments_from_conversation()]
+    )
+
+@router.get("/comments/{cid}/moderate", tags=["Comments"],
+            response_model=CommentResponse)
+async def get_comments_for_moderation(cid: int, user: dict = Depends(get_user)):
     """Get comments waiting for moderation from a conversation.
 
     Returns
@@ -330,19 +396,26 @@ async def get_comment(cid: int,
     dict
         A dictionary containing comments waiting for moderation.
     """
-    comment = Comments(conversation_id=cid,
-                       random=random,
-                       moderated=moderated)
-    return {'detail': comment.get_comments_from_conversation()}
-
-@router.get("/comments/{cid}/moderate", tags=["Comments"])
-async def get_comments(cid: int, user: dict = Depends(get_user)):
     # waiting to be moderated comments if conversation moderation enabled
     record = Conversations(cid=cid)
     data = record.get_conversation_from_id()
+    # if the conversation is moderation enabled
     if data['moderation'] is True:
         comment = Comments(conversation_id=cid)
-        return {'detail': comment.get_comments_waiting_for_moderate()}
+        return CommentResponse(
+            message='List of Comments waiting for moderation in the conversation',
+            detail=[CommentResponseMessage(id=record['id'],
+                                           create_date=record['create_date'],
+                                           comment=record['comment'],
+                                           user_id=record['user_id'],
+                                           conversation_id=record['conversation_id'],
+                                           moderated=record['moderated'],
+                                           approved=record['approved'])
+                    for record in comment.get_comments_waiting_for_moderate()])
+    err = "Invalid parameter, the conversation is not moderation enabled"
+    return CommentResponse(status_code=400,
+                           detail=err,
+                           error=err)
 
 @router.post("/comments/", tags=["Comments"])
 async def create_comment(comment: CommentModel,
