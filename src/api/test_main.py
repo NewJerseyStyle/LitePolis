@@ -53,7 +53,7 @@ def test_create_user_profile():
                            headers={"X-API-Key": os.environ.get('API_KEY')},
                            json={
                                "email": "test@user.com",
-                               "password": hashlib.md5(b"mysecretpassword").digest()
+                               "password": hashlib.md5(b"mysecretpassword").hexdigest()
                            })
     assert response.status_code == 200
     assert is_valid_uuid(response.json()["detail"])
@@ -234,7 +234,7 @@ def test_update_comments():
                           headers={"X-API-Key": os.environ.get('API_KEY')},
                           json={
                               'comment_id': 1,
-                              'comment': "comment['comment']"
+                              'comment': "comment text"
                           })
     assert response.status_code == 200
 
@@ -242,7 +242,7 @@ def test_update_comments_invalid_parameter():
     response = client.put(f"/api/v1/secure/comments",
                           headers={"X-API-Key": os.environ.get('API_KEY')},
                           json={
-                              'comment': "comment['comment']"
+                              'comment': "comment"
                           })
     assert response.status_code != 200
 
