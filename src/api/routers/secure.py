@@ -177,7 +177,7 @@ async def update_usertoken(user: dict = Depends(get_user)):
     api_key_not_updated = True
     while api_key_not_updated:
         new_api_key = str(uuid.uuid4())
-        api_keys = API_Keys(new_api_key, user[0])
+        api_keys = API_Keys(new_api_key, user['id'])
         if api_keys.get_user_id_from_apikey() is None:
             api_keys.update()
             api_key_not_updated = False
