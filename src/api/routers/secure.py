@@ -38,6 +38,7 @@ class UserProfile(BaseModel):
     password: str | None = None
 
 class ConversationModel(BaseModel):
+    id: int | None = None
     title: str | None = None
     description: str | None = None
 
@@ -352,7 +353,12 @@ async def update_conversation(update_conversation: ConversationModel,
     user : dict
         Authenticated user information.
     """
-    data = {'creator_id': user['id']}
+    if update_conversation.id is None:
+        raise HTTPException(status_code=400, detail="Invalid parameter")
+    data = {
+        'creator_id': user['id'],
+        'cid': update_conversation.id
+    }
     if update_conversation.title:
         data['title'] = update_conversation.title
     if update_conversation.description:
@@ -430,11 +436,9 @@ async def create_comment(comment: CommentModel,
         raise HTTPException(status_code=401, detail="Unauthorized")
     if None in [comment.comment_id,
                 comment.comment,
-                comment.user_id,
-                comment.conversation_id,
-                comment.task,
-                comment.vote]:
+                comment.conversation_id]:
         raise HTTPException(status_code=400, detail="Invalid parameter")
+    comment.user_id = user['id']
     new_record = Comments(**comment.dict(exclude_none=True))
     new_record.create()
 
@@ -448,9 +452,9 @@ async def update_comment(comment: CommentModel,
     if comment.comment_id is None:
         raise HTTPException(status_code=400, detail="Invalid parameter")
     record = Comments(**comment.dict(exclude_unset=True))
-    if request_body['task'] == 'approve':
+    if comment.task == 'approve':
         record.approve()
-    elif request_body['task'] == 'reject':
+    elif comment.task == 'reject':
         record.reject()
     else:
         record.update()
