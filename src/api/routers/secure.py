@@ -240,6 +240,8 @@ async def create_userprofile(user_profile: UserProfile,
     if None  in [user_profile.email, user_profile.password]:
         raise HTTPException(status_code=400, detail="Invalid password")
     # Sanitization
+    if Users.get_user_id_from_email(user_profile.email) is not None:
+        raise HTTPException(status_code=400, detail="Invalid email")
     data = {
         'email': user_profile.email,
         'password': hashlib.sha1(user_profile.password.encode()).hexdigest()
@@ -263,7 +265,7 @@ async def update_userprofile(update_user: UserProfile,
     """
     if user['role'] not in ['user', 'root']:
         raise HTTPException(status_code=401, detail="Unauthorized")
-    data = {'id': user['id']}
+    data = {'uid': user['id']}
     if update_user.email:
         data['email'] = update_user.email
     if update_user.password:

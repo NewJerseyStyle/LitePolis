@@ -37,7 +37,7 @@ def test_read_user_role():
     assert response.json()['detail'] == "root"
 
 def test_read_user_renew():
-    response = client.get("/api/v1/secure/users/renew", headers={"X-API-Key": os.environ.get('API_KEY')})
+    response = client.put("/api/v1/secure/users/renew", headers={"X-API-Key": os.environ.get('API_KEY')})
     assert response.status_code == 200
     assert is_valid_uuid(response.json()['detail'])
     
@@ -48,14 +48,16 @@ def test_read_user_invalid_parameter():
     test_read_main_invalid_parameter()
 
 def test_create_user_profile():
+    import hashlib
     response = client.post("/api/v1/secure/users/profile",
                            headers={"X-API-Key": os.environ.get('API_KEY')},
                            json={
                                "email": "test@user.com",
-                               "password": "mysecretpassword"
+                               "password": hashlib.md5(b"mysecretpassword").digest()
                            })
     assert response.status_code == 200
     assert is_valid_uuid(response.json()["detail"])
+    os.environ['API_KEY'] = response.json()["detail"]
 
 def test_create_user_invalid_parameter():
     response = client.post("/api/v1/secure/users/profile",
@@ -113,27 +115,26 @@ def test_update_user_invalid_parameter():
 
 def test_delete_user_profile():
     response = client.delete("/api/v1/secure/users/profile", headers={"X-API-Key": os.environ.get('API_KEY')})
-    assert response.status_code == 405
-    assert response.json() == {"detail": "Method Not Allowed"}
+    assert response.status_code == 403
 
 def test_delete_user_invalid_parameter():
     pass # as delete is not implemented right now
 
 def test_read_conversation():
     # create conversation
-    response = client.post("/api/v1/secure/conversation",
+    response = client.post("/api/v1/secure/conversations",
                            headers={"X-API-Key": os.environ.get('API_KEY')},
                            json={
                                "title": "A topic",
                                "desc": "Users will come in this conversation and leave comments"
                            })
     assert response.status_code == 200
-    response = client.get("/conversations/all", headers={"X-API-Key": os.environ.get('API_KEY')})
+    response = client.get("/api/v1/secure/conversations/all", headers={"X-API-Key": os.environ.get('API_KEY')})
     assert response.status_code == 200
     for conversation in response.json()['detail']:
         assert conversation['creator_id'] == 0
     cid = conversation['id']
-    response = client.get(f"/conversations/{cid}", headers={"X-API-Key": os.environ.get('API_KEY')})
+    response = client.get(f"/api/v1/secure/conversations/{cid}", headers={"X-API-Key": os.environ.get('API_KEY')})
     assert response.status_code == 200
     assert response.json() == json.dumps(conversation)
 
@@ -143,11 +144,11 @@ def test_read_conversation_invalid_parameter():
     assert response.status_code != 200
 
 def test_create_conversation_invalid_parameter():
-    response = client.post("/api/v1/secure/conversation", headers={"X-API-Key": os.environ.get('API_KEY')})
+    response = client.post("/api/v1/secure/conversations", headers={"X-API-Key": os.environ.get('API_KEY')})
     assert response.status_code != 200
 
 def test_update_conversation():
-    response = client.put("/api/v1/secure/conversation",
+    response = client.put("/api/v1/secure/conversations",
                           headers={"X-API-Key": os.environ.get('API_KEY')},
                           json={
                               "title": "A new topic",
@@ -157,9 +158,9 @@ def test_update_conversation():
     assert response.status_code == 200
 
 def test_update_conversation_invalid_parameter():
-    response = client.put("/api/v1/secure/conversation", headers={"X-API-Key": os.environ.get('API_KEY')})
+    response = client.put("/api/v1/secure/conversations", headers={"X-API-Key": os.environ.get('API_KEY')})
     assert response.status_code != 200
-    response = client.put("/api/v1/secure/conversation",
+    response = client.put("/api/v1/secure/conversations",
                           headers={"X-API-Key": os.environ.get('API_KEY')},
                           json={
                               "title_desc": "A new topic"
@@ -168,7 +169,7 @@ def test_update_conversation_invalid_parameter():
 
 def test_delete_conversation():
     cid = 1
-    response = client.delete(f"/api/v1/secure/conversation/{cid}", headers={"X-API-Key": os.environ.get('API_KEY')})
+    response = client.delete(f"/api/v1/secure/conversations/{cid}", headers={"X-API-Key": os.environ.get('API_KEY')})
     assert response.status_code == 405
     assert response.json() == {"detail": "Method Not Allowed"}
 
@@ -250,8 +251,7 @@ def test_delete_comments():
     cid = 1
     response = client.delete(f"/api/v1/secure/comments/{cid}",
                                 headers={"X-API-Key": os.environ.get('API_KEY')})
-    assert response.status_code == 405
-    assert response.json() == {"detail": "Method Not Allowed"}
+    assert response.status_code == 403
 
 def test_delete_comments_invalid_parameter():
     pass # as delete is not implemented right now
