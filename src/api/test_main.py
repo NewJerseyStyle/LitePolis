@@ -10,7 +10,7 @@ client = TestClient(main.app)
 def test_read_main():
     response = client.get("/api/v1/public/")
     assert response.status_code == 200
-    assert response.text == "OK"
+    assert response.text == {"detail": "OK"}
 
 def test_read_secure_main():
     response = client.get("/api/v1/secure/", headers={"X-API-Key": os.environ.get('API_KEY')})
@@ -39,8 +39,7 @@ def test_read_user_role():
 def test_read_user_renew():
     response = client.get("/api/v1/secure/users/renew", headers={"X-API-Key": os.environ.get('API_KEY')})
     assert response.status_code == 200
-    assert "apikey" in response.json()['detail']
-    assert is_valid_uuid(response.json()['detail']['apikey'])
+    assert is_valid_uuid(response.json()['detail'])
     
 def test_read_user_profile():
     test_read_secure_main()
