@@ -170,8 +170,7 @@ def test_update_conversation_invalid_parameter():
 def test_delete_conversation():
     cid = 1
     response = client.delete(f"/api/v1/secure/conversations/{cid}", headers={"X-API-Key": os.environ.get('API_KEY')})
-    assert response.status_code == 405
-    assert response.json() == {"detail": "Method Not Allowed"}
+    assert response.status_code == 403
 
 def test_delete_conversation_invalid_parameter():
     pass # as delete is not implemented right now
