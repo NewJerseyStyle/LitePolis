@@ -55,8 +55,7 @@ def test_create_user_profile():
                                "password": "mysecretpassword"
                            })
     assert response.status_code == 200
-    assert "apikey" in response.json()['detail']
-    assert is_valid_uuid(response.json()["detail"]["apikey"])
+    assert is_valid_uuid(response.json()["detail"])
 
 def test_create_user_invalid_parameter():
     response = client.post("/users/profile",

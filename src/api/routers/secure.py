@@ -223,7 +223,8 @@ async def get_userprofile(user: dict = Depends(get_user)):
         )
     )
 
-@router.post("/users/profile", tags=["User"])
+@router.post("/users/profile", tags=["User"],
+            response_model=ResponseMessage)
 async def create_userprofile(user_profile: UserProfile,
                              user: dict = Depends(get_user)):
     """Create a new user profile.
@@ -246,6 +247,7 @@ async def create_userprofile(user_profile: UserProfile,
     # Commit to DB
     new_record = Users(**data)
     new_record.create()
+    return update_usertoken(user)
 
 @router.put("/users/profile", tags=["User"])
 async def update_userprofile(update_user: UserProfile,
