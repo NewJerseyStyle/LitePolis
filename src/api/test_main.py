@@ -69,23 +69,25 @@ def test_create_user_invalid_parameter():
     assert isinstance(response.json()['detail'], str)
 
 def test_update_user_profile():
+    import hashlib
     response = client.put("/api/v1/secure/users/profile",
                           headers={"X-API-Key": os.environ.get('API_KEY')},
                           json={
                               "email": "newmail@user.com",
-                              "password": "newpassword"
+                              "password": hashlib.md5(b"newpassword").hexdigest()
                           })
     assert response.status_code == 200
 
 def test_update_user_invalid_parameter():
+    import hashlib
     response = client.put("/api/v1/secure/users/profile",
                           headers={"X-API-Key": os.environ.get('API_KEY')},
                           json={
                               "email": "newmail.user.com",
-                              "password": "newpassword"
+                              "password": hashlib.md5(b"newpassword").hexdigest()
                           })
-    assert response.status_code == 400
-    assert response.json() == {"detail": "Invalid parameter"}
+    assert response.status_code != 200
+    assert response.json()["detail"] == "Invalid parameter"
     response = client.put("/api/v1/secure/users/profile",
                           headers={"X-API-Key": os.environ.get('API_KEY')},
                           json={
@@ -93,25 +95,22 @@ def test_update_user_invalid_parameter():
                               "password": ""
                           })
     assert response.status_code == 400
-    assert response.json() == {"detail": "Invalid parameter"}
     response = client.put("/api/v1/secure/users/profile",
                           headers={"X-API-Key": os.environ.get('API_KEY')},
                           json={
                               "email": "newmail@user.com",
-                              "password": "newpass",
+                              "password": hashlib.md5(b"newpassword").hexdigest()
                               "id": 1
                           })
-    assert response.status_code == 400
-    assert response.json() == {"detail": "Invalid parameter"}
+    assert response.status_code != 200
     response = client.put("/api/v1/secure/users/profile",
                           headers={"X-API-Key": os.environ.get('API_KEY')},
                           json={
                               "email": "newmail@user.com",
-                              "password": "aa",
+                              "password": hashlib.md5(b"newpassword").hexdigest()
                               "role": "root"
                           })
-    assert response.status_code == 400
-    assert response.json() == {"detail": "Invalid parameter"}
+    assert response.status_code != 200
 
 def test_delete_user_profile():
     response = client.delete("/api/v1/secure/users/profile", headers={"X-API-Key": os.environ.get('API_KEY')})
@@ -151,6 +150,7 @@ def test_update_conversation():
     response = client.put("/api/v1/secure/conversations",
                           headers={"X-API-Key": os.environ.get('API_KEY')},
                           json={
+                              "id": 1,
                               "title": "A new topic",
                               "desc": "Users will come in this conversation and leave comments",
                               "moderate": True

@@ -250,7 +250,7 @@ async def create_userprofile(user_profile: UserProfile,
     # Commit to DB
     new_record = Users(**data)
     new_record.create()
-    return update_usertoken(user)
+    return await update_usertoken(user)
 
 @router.put("/users/profile", tags=["User"])
 async def update_userprofile(update_user: UserProfile,
@@ -270,6 +270,8 @@ async def update_userprofile(update_user: UserProfile,
     if update_user.email:
         data['email'] = update_user.email
     if update_user.password:
+        if len(update_user.password) != 32:
+            raise HTTPException(status_code=400, detail="Invalid parameter")
         data['password'] = hashlib.sha1(update_user.password.encode()).hexdigest()
     new_record = Users(**data)
     new_record.update()
@@ -434,8 +436,7 @@ async def create_comment(comment: CommentModel,
     """
     if user['role'] != 'user':
         raise HTTPException(status_code=401, detail="Unauthorized")
-    if None in [comment.comment_id,
-                comment.comment,
+    if None in [comment.comment,
                 comment.conversation_id]:
         raise HTTPException(status_code=400, detail="Invalid parameter")
     comment.user_id = user['id']
