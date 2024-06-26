@@ -134,7 +134,7 @@ def test_read_conversation():
     cid = conversation['id']
     response = client.get(f"/api/v1/secure/conversations/{cid}", headers={"X-API-Key": os.environ.get('API_KEY')})
     assert response.status_code == 200
-    assert response.json() == json.dumps(conversation)
+    assert response.json()['detail'] == json.dumps(conversation)
 
 def test_read_conversation_invalid_parameter():
     cid = "test"
