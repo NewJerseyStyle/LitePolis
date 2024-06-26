@@ -38,6 +38,7 @@ class UserProfile(BaseModel):
     password: str | None = None
 
 class ConversationModel(BaseModel):
+    id: int | None = None
     title: str | None = None
     description: str | None = None
 
@@ -177,7 +178,7 @@ async def update_usertoken(user: dict = Depends(get_user)):
     api_key_not_updated = True
     while api_key_not_updated:
         new_api_key = str(uuid.uuid4())
-        api_keys = API_Keys(new_api_key, user[0])
+        api_keys = API_Keys(new_api_key, user['id'])
         if api_keys.get_user_id_from_apikey() is None:
             api_keys.update()
             api_key_not_updated = False
@@ -223,7 +224,8 @@ async def get_userprofile(user: dict = Depends(get_user)):
         )
     )
 
-@router.post("/users/profile", tags=["User"])
+@router.post("/users/profile", tags=["User"],
+            response_model=ResponseMessage)
 async def create_userprofile(user_profile: UserProfile,
                              user: dict = Depends(get_user)):
     """Create a new user profile.
@@ -239,6 +241,8 @@ async def create_userprofile(user_profile: UserProfile,
     if None  in [user_profile.email, user_profile.password]:
         raise HTTPException(status_code=400, detail="Invalid password")
     # Sanitization
+    if Users.get_user_id_from_email(user_profile.email) is not None:
+        raise HTTPException(status_code=400, detail="Invalid email")
     data = {
         'email': user_profile.email,
         'password': hashlib.sha1(user_profile.password.encode()).hexdigest()
@@ -246,6 +250,7 @@ async def create_userprofile(user_profile: UserProfile,
     # Commit to DB
     new_record = Users(**data)
     new_record.create()
+    return await update_usertoken(user)
 
 @router.put("/users/profile", tags=["User"])
 async def update_userprofile(update_user: UserProfile,
@@ -261,10 +266,12 @@ async def update_userprofile(update_user: UserProfile,
     """
     if user['role'] not in ['user', 'root']:
         raise HTTPException(status_code=401, detail="Unauthorized")
-    data = {'id': user['id']}
+    data = {'uid': user['id']}
     if update_user.email:
         data['email'] = update_user.email
-    if update_user.password:
+    if update_user.password is not None:
+        if len(update_user.password) != 32:
+            raise HTTPException(status_code=400, detail="Invalid parameter")
         data['password'] = hashlib.sha1(update_user.password.encode()).hexdigest()
     new_record = Users(**data)
     new_record.update()
@@ -348,7 +355,12 @@ async def update_conversation(update_conversation: ConversationModel,
     user : dict
         Authenticated user information.
     """
-    data = {'creator_id': user['id']}
+    if update_conversation.id is None:
+        raise HTTPException(status_code=400, detail="Invalid parameter")
+    data = {
+        'creator_id': user['id'],
+        'cid': update_conversation.id
+    }
     if update_conversation.title:
         data['title'] = update_conversation.title
     if update_conversation.description:
@@ -424,13 +436,10 @@ async def create_comment(comment: CommentModel,
     """
     if user['role'] != 'user':
         raise HTTPException(status_code=401, detail="Unauthorized")
-    if None in [comment.comment_id,
-                comment.comment,
-                comment.user_id,
-                comment.conversation_id,
-                comment.task,
-                comment.vote]:
+    if None in [comment.comment,
+                comment.conversation_id]:
         raise HTTPException(status_code=400, detail="Invalid parameter")
+    comment.user_id = user['id']
     new_record = Comments(**comment.dict(exclude_none=True))
     new_record.create()
 
@@ -444,9 +453,9 @@ async def update_comment(comment: CommentModel,
     if comment.comment_id is None:
         raise HTTPException(status_code=400, detail="Invalid parameter")
     record = Comments(**comment.dict(exclude_unset=True))
-    if request_body['task'] == 'approve':
+    if comment.task == 'approve':
         record.approve()
-    elif request_body['task'] == 'reject':
+    elif comment.task == 'reject':
         record.reject()
     else:
         record.update()

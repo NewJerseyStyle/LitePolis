@@ -523,6 +523,7 @@ class Conversations:
             "description": record[2],
             "creator_id": record[3],
             # "moderation": record[4]
+            "moderation": False # moderation implemented in database yet
         }
     
     def create(self):
