@@ -99,7 +99,7 @@ def test_update_user_invalid_parameter():
                           headers={"X-API-Key": os.environ.get('API_KEY')},
                           json={
                               "email": "newmail@user.com",
-                              "password": hashlib.md5(b"newpassword").hexdigest()
+                              "password": hashlib.md5(b"newpassword").hexdigest(),
                               "id": 1
                           })
     assert response.status_code != 200
@@ -107,7 +107,7 @@ def test_update_user_invalid_parameter():
                           headers={"X-API-Key": os.environ.get('API_KEY')},
                           json={
                               "email": "newmail@user.com",
-                              "password": hashlib.md5(b"newpassword").hexdigest()
+                              "password": hashlib.md5(b"newpassword").hexdigest(),
                               "role": "root"
                           })
     assert response.status_code != 200
