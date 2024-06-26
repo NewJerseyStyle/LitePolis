@@ -269,7 +269,7 @@ async def update_userprofile(update_user: UserProfile,
     data = {'uid': user['id']}
     if update_user.email:
         data['email'] = update_user.email
-    if update_user.password:
+    if update_user.password is not None:
         if len(update_user.password) != 32:
             raise HTTPException(status_code=400, detail="Invalid parameter")
         data['password'] = hashlib.sha1(update_user.password.encode()).hexdigest()
