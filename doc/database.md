@@ -84,6 +84,8 @@ The database will be divided into two, for write-only and read-only to ensure th
 for data mining and data analysis work. Triggers or data processing frameworks `Flink` will be used
 to bridge the write-only database and the read-only database.
 
+> ⚠️ Above plan may not be accurate as alternative can be adopting Star schema or Snowflake schema
+
 The table `userdata` will not be used for login after beta version release.
 Login and access control will then relay on OpenID solution with OIDC server.
 
