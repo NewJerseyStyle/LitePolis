@@ -3,21 +3,21 @@
 This module depend on `db` module for data retrieval of user record.
 And this module is a dependency of `route.secure` API endpoints.
 
-Example
--------
+Examples
+--------
 To use this module in API endpoints, you have to import the functions
 you want to use in this case we use default `get_user` function for
 authentication, and then apply the function in API endpoint as the
 default value of function parameter.
 
-    from auth import get_user
-    
-    router = APIRouter()
-    
-    @router.get("/")
-    async def get_testroute(user: dict = Depends(get_user)):
-        return user
-
+>>> from auth import get_user
+>>> 
+>>> router = APIRouter()
+>>> 
+>>> @router.get("/")
+>>> async def get_testroute(user: dict = Depends(get_user)):
+>>>     return user
+>>> 
 
 Above example is the default example function of `route.secure`
 the endpoints that required API key to access where this project start.
@@ -79,12 +79,10 @@ def is_valid_uuid(uuid_to_test, version=4):
     
      Examples
     --------
-    .. highlight:: python
-    .. code-block:: python
-        is_valid_uuid('c9bf9e57-1685-4c89-bafb-ff5af830be8a')
-        # return: True
-        is_valid_uuid('c9bf9e58')
-        # return: False
+    >>> is_valid_uuid('c9bf9e57-1685-4c89-bafb-ff5af830be8a')
+    >>> True
+    >>> is_valid_uuid('c9bf9e58')
+    >>> False
     """
     
     try:
