@@ -6,7 +6,14 @@
 Welcome to LitePolis API's documentation!
 =========================================
 
-   main
+## Getting Started
+To run the API, execute the following command:
+```bash
+$ SQLUSER="root" SQLPASS="mysecret" SQLHOST="localhost" SQLPORT="9030" ui="streamlit" fastapi dev main.py --host 0.0.0.0 --port 8000
+```
+This will start the API on `http://0.0.0.0:8000` in development mode.
+
+> The API documentation is available at `http://0.0.0.0:8000/docs` through Swagger.
 
 .. toctree::
    :maxdepth: 2
