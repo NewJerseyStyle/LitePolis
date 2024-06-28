@@ -20,22 +20,18 @@ environment variables, the connection to database rely on them:
 - SQLHOST
 - SQLPORT
 
-Example
--------
+Examples
+--------
 To use this module in API endpoints, you have to import the module which
 will initialize the database connection using `mysql-connector-python`
 library.
 
-.. highlight:: python
-.. code-block:: python
-    import db
+>>> import db
 
 
 To insert a new record to `userdata`.
-.. highlight:: python
-.. code-block:: python
-    user = Users(email='test@example.com', password='12345678')
-    user.create()
+>>> user = Users(email='test@example.com', password='12345678')
+>>> user.create()
 
 
 Notes
@@ -148,9 +144,7 @@ class Users:
 
     Examples
     --------
-    .. highlight:: python
-    .. code-block:: python
-        user = Users("john.doe@example.com", "mysecretpassword", "user")
+    >>> user = Users("john.doe@example.com", "mysecretpassword", "user")
 
     Notes
     -----
@@ -198,10 +192,9 @@ class Users:
 
         Examples
         --------
-        .. highlight:: python
-        .. code-block:: python
-            user_id = Users.get_user_id_from_email("john.doe@example.com")
-            print(user_id)  # Output: 1 (assuming the user ID is 1)
+        >>> user_id = Users.get_user_id_from_email("john.doe@example.com")
+        >>> print(user_id) # (assuming the user ID is 1)
+        1
 
         Notes
         -----
@@ -236,11 +229,10 @@ class Users:
 
         Examples
         --------
-        .. highlight:: python
-        .. code-block:: python
-            api_key = "my_secret_api_key"
-            user_info = Users.get_user_from_api_key(api_key)
-            print(user_info)  # Output: {"id": 1, "email": "john.doe@example.com", "role": "user"}
+        >>> api_key = "my_secret_api_key"
+        >>> user_info = Users.get_user_from_api_key(api_key)
+        >>> print(user_info)
+        {"id": 1, "email": "john.doe@example.com", "role": "user"}
 
         Notes
         -----
@@ -270,10 +262,8 @@ class Users:
 
         Examples
         --------
-        .. highlight:: python
-        .. code-block:: python
-            user = Users("john.doe@example.com", "mysecretpassword", "admin")
-            user.create()
+        >>> user = Users("john.doe@example.com", "mysecretpassword", "admin")
+        >>> user.create()
 
         Notes
         -----
@@ -296,10 +286,8 @@ class Users:
 
         Examples
         --------
-        .. highlight:: python
-        .. code-block:: python
-            user = Users("john.doe.newemail@example.com", "mynewpassword", "user", 1)
-            user.update()
+        >>> user = Users("john.doe.newemail@example.com", "mynewpassword", "user", 1)
+        >>> user.update()
 
         Notes
         -----
@@ -380,9 +368,7 @@ class Conversations:
 
     Examples
     --------
-    .. highlight:: python
-    .. code-block:: python
-        conversation = Conversations("My Conversation", "This is a conversation", 1)
+    >>> conversation = Conversations("My Conversation", "This is a conversation", 1)
 
     Notes
     -----
@@ -406,9 +392,7 @@ class Conversations:
 
         Examples
         --------
-        .. highlight:: python
-        .. code-block:: python
-            conversation = Conversations("My Conversation", "This is a conversation", 1)
+        >>> conversation = Conversations("My Conversation", "This is a conversation", 1)
         """
         self.data = dict()
         if title is not None:
@@ -443,25 +427,21 @@ class Conversations:
 
         Examples
         --------
-        .. highlight:: python
-        .. code-block:: python
-            conversations = Conversations.get_all_conversation(user_id=1)
-            for conversation in conversations:
-                print(conversation)
+        >>> conversations = Conversations.get_all_conversation(user_id=1)
+        >>> for conversation in conversations:
+        >>>     print(conversation)
 
-        .. highlight:: python
-        .. code-block:: python
-            conversations = Conversations.get_all_conversation(user_email="john.doe@example.com")
-            for conversation in conversations:
-                print(conversation)
-            # [
-            #     {
-            #         "id": 1,
-            #         "title": "Test conversation",
-            #         "description": "A demo",
-            #         "creator_id": 1,
-            #     }
-            # ]
+        >>> conversations = Conversations.get_all_conversation(user_email="john.doe@example.com")
+        >>> for conversation in conversations:
+        >>>     print(conversation)
+        [
+            {
+                "id": 1,
+                "title": "Test conversation",
+                "description": "A demo",
+                "creator_id": 1,
+            }
+        ]
         """
         if user_id is None:
             assert user_email
@@ -497,17 +477,15 @@ class Conversations:
 
         Examples
         --------
-        .. highlight:: python
-        .. code-block:: python
-            conversation = Conversations(cid=1)
-            conversation_data = conversation.get_conversation_from_id()
-            print(conversation_data)
-            # {
-            #     "id": 1,
-            #     "title": "Test conversation",
-            #     "description": "A demo",
-            #     "creator_id": 1,
-            # }
+        >>> conversation = Conversations(cid=1)
+        >>> conversation_data = conversation.get_conversation_from_id()
+        >>> print(conversation_data)
+        {
+            "id": 1,
+            "title": "Test conversation",
+            "description": "A demo",
+            "creator_id": 1,
+        }
         """
         assert 'id' in self.data
         query = Query.from_(self.table).select('*') \
@@ -534,10 +512,8 @@ class Conversations:
 
         Examples
         --------
-        .. highlight:: python
-        .. code-block:: python
-            conversation = Conversations("My Conversation", "This is a conversation", 1)
-            conversation.create()
+        >>> conversation = Conversations("My Conversation", "This is a conversation", 1)
+        >>> conversation.create()
         """
         # validate for create
         assert 'title' in self.data
@@ -562,11 +538,9 @@ class Conversations:
 
         Examples
         --------
-        .. highlight:: python
-        .. code-block:: python
-            conversation = Conversations(title="New Title", cid=1)
-            conversation.data['desc'] = 'New Description'
-            conversation.update()
+        >>> conversation = Conversations(title="New Title", cid=1)
+        >>> conversation.data['desc'] = 'New Description'
+        >>> conversation.update()
         """
         # validate for update
         assert 'id' in self.data
@@ -597,10 +571,8 @@ class Conversations:
 
         Examples
         --------
-        .. highlight:: python
-        .. code-block:: python
-            conversation = Conversations(cid=1)
-            conversation.delete() # NotImplementedError: This method is not implemented.
+        >>> conversation = Conversations(cid=1)
+        >>> conversation.delete() # NotImplementedError: This method is not implemented.
 
         Notes
         -----
@@ -634,9 +606,7 @@ class Comments:
 
     Examples
     --------
-    .. highlight:: python
-    .. code-block:: python
-        comment = Comments(comment="Hello, world!", user_id=1, conversation_id=1)
+    >>> comment = Comments(comment="Hello, world!", user_id=1, conversation_id=1)
 
     Methods
     -------
@@ -684,9 +654,7 @@ class Comments:
 
         Examples
         --------
-        .. highlight:: python
-        .. code-block:: python
-            comment = Comments(comment="Hello, world!", user_id=1, conversation_id=1)
+        >>> comment = Comments(comment="Hello, world!", user_id=1, conversation_id=1)
         """
         self.data = dict()
         if comment_id is not None:
@@ -722,14 +690,17 @@ class Comments:
 
         Examples
         --------
-        .. highlight:: python
-        .. code-block:: python
-            comment = Comments.get_comment_from_id(1)
-            print(comment)
-            # {"id": 1, "create_date": "2012-11-15 00:00:00",
-            #  "comment": 'Hello, world!', "user_id": 1,
-            #  "conversation_id": 1, "moderated": False,
-            #  "approved": False)
+        >>> comment = Comments.get_comment_from_id(1)
+        >>> print(comment)
+        {
+            "id": 1,
+            "create_date": "2012-11-15 00:00:00",
+             "comment": 'Hello, world!',
+             "user_id": 1,
+             "conversation_id": 1,
+             "moderated": False,
+             "approved": False
+         }
         """
         query = Query.from_(Comments.table).select('*') \
                     .where(Comments.table.ID == comment_id)
@@ -762,38 +733,66 @@ class Comments:
 
         Examples
         --------
-        .. highlight:: python
-        .. code-block:: python
-            comment = Comments(conversation_id=1, moderated=True, random=False)
-            comments = comment.get_comments_from_conversation()
-            for comment in comments:
-                print(comment)
-            # {"id": 1, "create_date": "2014-01-24", "comment": 'Comment 1!',
-            #  "user_id": 1, "conversation_id": 1, "moderated": False,
-            #  "approved": False)
-            # {"id": 2, "create_date": "2014-09-25", "comment": 'Comment 2!',
-            #  "user_id": 1, "conversation_id": 1, "moderated": False,
-            #  "approved": False)
-            # {"id": 3, "create_date": "2014-11-26", "comment": 'Comment 3!',
-            #  "user_id": 1, "conversation_id": 1, "moderated": False,
-            #  "approved": False)
+        >>> comment = Comments(conversation_id=1, moderated=True, random=False)
+        >>> comments = comment.get_comments_from_conversation()
+        >>> for comment in comments:
+        >>>     print(comment)
+        {
+            "id": 1, "create_date": "2014-01-24", "comment": 'Comment 1!',
+             "user_id": 1, "conversation_id": 1, "moderated": False,
+             "approved": False
+         }
+        {
+            "id": 2,
+            "create_date": "2014-09-25",
+            "comment": 'Comment 2!',
+            "user_id": 1,
+            "conversation_id": 1,
+            "moderated": False,
+            "approved": False
+        }
+        {
+            "id": 3,
+            "create_date": "2014-11-26",
+            "comment": 'Comment 3!',
+            "user_id": 1,
+            "conversation_id": 1,
+            "moderated": False,
+            "approved": False
+         }
 
             
-        .. highlight:: python
-        .. code-block:: python
-            comment = Comments(conversation_id=1, moderated=True, random=True)
-            comments = comment.get_comments_from_conversation()
-            for comment in comments:
-                print(comment)
-            # {"id": 2, "create_date": "2014-09-25", "comment": 'Comment 2!',
-            #  "user_id": 1, "conversation_id": 1, "moderated": False,
-            #  "approved": False)
-            # {"id": 3, "create_date": "2014-11-26", "comment": 'Comment 3!',
-            #  "user_id": 1, "conversation_id": 1, "moderated": False,
-            #  "approved": False)
-            # {"id": 1, "create_date": "2014-01-24", "comment": 'Comment 1!',
-            #  "user_id": 1, "conversation_id": 1, "moderated": False,
-            #  "approved": False)
+        >>> comment = Comments(conversation_id=1, moderated=True, random=True)
+        >>> comments = comment.get_comments_from_conversation()
+        >>> for comment in comments:
+        >>>     print(comment)
+        {
+            "id": 2,
+            "create_date": "2014-09-25",
+            "comment": 'Comment 2!',
+            "user_id": 1,
+            "conversation_id": 1,
+            "moderated": False,
+             "approved": False
+         }
+        {
+            "id": 3,
+            "create_date": "2014-11-26",
+            "comment": 'Comment 3!',
+            "user_id": 1,
+            "conversation_id": 1,
+            "moderated": False,
+            "approved": False
+        }
+        {
+            "id": 1,
+            "create_date": "2014-01-24",
+            "comment": 'Comment 1!',
+            "user_id": 1,
+            "conversation_id": 1,
+            "moderated": False,
+            "approved": False
+        }
         """
         assert 'moderated' in self.data
         assert 'random' in self.data
@@ -841,21 +840,37 @@ class Comments:
 
         Examples
         --------
-        .. highlight:: python
-        .. code-block:: python
-            comment = Comments(conversation_id=1)
-            comments = comment.get_comments_waiting_for_moderate()
-            for comment in comments:
-                print(comment)
-            # {"id": 1, "create_date": "2014-01-24", "comment": 'Comment 1!',
-            #  "user_id": 1, "conversation_id": 1, "moderated": False,
-            #  "approved": False)
-            # {"id": 2, "create_date": "2014-09-25", "comment": 'Comment 2!',
-            #  "user_id": 1, "conversation_id": 1, "moderated": False,
-            #  "approved": False)
-            # {"id": 3, "create_date": "2014-11-26", "comment": 'Comment 3!',
-            #  "user_id": 1, "conversation_id": 1, "moderated": False,
-            #  "approved": False)
+        >>> comment = Comments(conversation_id=1)
+        >>> comments = comment.get_comments_waiting_for_moderate()
+        >>> for comment in comments:
+        >>>     print(comment)
+        {
+            "id": 1,
+            "create_date": "2014-01-24",
+            "comment": 'Comment 1!',
+            "user_id": 1,
+            "conversation_id": 1,
+            "moderated": False,
+            "approved": False
+        }
+        {
+            "id": 2,
+            "create_date": "2014-09-25",
+            "comment": 'Comment 2!',
+            "user_id": 1,
+            "conversation_id": 1,
+            "moderated": False,
+            "approved": False
+        }
+        {
+            "id": 3,
+            "create_date": "2014-11-26",
+            "comment": 'Comment 3!',
+            "user_id": 1,
+            "conversation_id": 1,
+            "moderated": False,
+            "approved": False
+        }
         """
         # get comments in conversation that is not moderated before
         assert 'conversation_id' in self.data
@@ -888,10 +903,8 @@ class Comments:
 
         Examples
         --------
-        .. highlight:: python
-        .. code-block:: python
-            comment = Comments(comment='Hello, world!', user_id=1, conversation_id=1)
-            comment.create()
+        >>> comment = Comments(comment='Hello, world!', user_id=1, conversation_id=1)
+        >>> comment.create()
         """
         # validate for create
         assert 'comment' in self.data
@@ -916,10 +929,8 @@ class Comments:
 
         Examples
         --------
-        .. highlight:: python
-        .. code-block:: python
-            comment = Comments(id=1, moderated=True)
-            comment.update()
+        >>> comment = Comments(id=1, moderated=True)
+        >>> comment.update()
         """
         # validate for update
         assert 'id' in self.data
@@ -951,10 +962,8 @@ class Comments:
 
         Examples
         --------
-        .. highlight:: python
-        .. code-block:: python
-            comment = Comments(id=1)
-            comment.approve()
+        >>> comment = Comments(id=1)
+        >>> comment.approve()
         """
         # validate for update
         assert 'id' in self.data
@@ -970,10 +979,8 @@ class Comments:
 
         Examples
         --------
-        .. highlight:: python
-        .. code-block:: python
-            comment = Comments(id=1)
-            comment.approve()
+        >>> comment = Comments(id=1)
+        >>> comment.reject()
         """
         # validate for update
         assert 'id' in self.data
@@ -988,10 +995,8 @@ class Comments:
 
         Examples
         --------
-        .. highlight:: python
-        .. code-block:: python
-            comment = Comments(id=1)
-            comment.delete()
+        >>> comment = Comments(id=1)
+        >>> comment.delete()
 
         Notes
         -----
@@ -1030,14 +1035,12 @@ class API_Keys:
 
     Examples
     --------
-    .. highlight:: python
-    .. code-block:: python
-        api_key = API_Keys(apikey='my_api_key', user_id=1)
-        api_key.create()
-        api_key.get_user_id_from_apikey()
-        # 1
-        api_key.update()
-        api_key.expire()
+    >>> api_key = API_Keys(apikey='my_api_key', user_id=1)
+    >>> api_key.create()
+    >>> api_key.get_user_id_from_apikey()
+    1
+    >>> api_key.update()
+    >>> api_key.expire()
     """
     table = Table('apikeys')
     def __init__(self, apikey: str, user_id: int = None):
@@ -1057,9 +1060,7 @@ class API_Keys:
 
         Examples
         --------
-        .. highlight:: python
-        .. code-block:: python
-            api_key = API_Keys(apikey='my_api_key', user_id=1)
+        >>> api_key = API_Keys(apikey='my_api_key', user_id=1)
         """
         self.data = dict()
         self.data['api_key'] = apikey
@@ -1080,10 +1081,8 @@ class API_Keys:
 
         Examples
         --------
-        .. highlight:: python
-        .. code-block:: python
-            api_key = API_Keys(apikey='my_api_key', user_id=1)
-            api_key.get_user_id_from_apikey()
+        >>> api_key = API_Keys(apikey='my_api_key', user_id=1)
+        >>> api_key.get_user_id_from_apikey()
         """
         query = Query.from_(self.table).select(self.table.USER_ID) \
                     .where(self.table.API_KEY == self.data['api_key'])
@@ -1104,10 +1103,8 @@ class API_Keys:
 
         Examples
         --------
-        .. highlight:: python
-        .. code-block:: python
-            api_key = API_Keys(apikey='my_api_key', user_id=1)
-            api_key.create()
+        >>> api_key = API_Keys(apikey='my_api_key', user_id=1)
+        >>> api_key.create()
         """
         # validate for create
         assert 'user_id' in self.data
@@ -1127,10 +1124,8 @@ class API_Keys:
 
         Examples
         --------
-        .. highlight:: python
-        .. code-block:: python
-            api_key = API_Keys(apikey='my_api_key', user_id=1)
-            api_key.update()
+        >>> api_key = API_Keys(apikey='my_api_key', user_id=1)
+        >>> api_key.update()
         """
         # validate for update
         assert 'user_id' in self.data
@@ -1152,10 +1147,8 @@ class API_Keys:
 
         Examples
         --------
-        .. highlight:: python
-        .. code-block:: python
-            api_key = API_Keys(apikey='my_api_key', user_id=1)
-            api_key.expire()
+        >>> api_key = API_Keys(apikey='my_api_key', user_id=1)
+        >>> api_key.expire()
         """
         query = Query.from_(self.table).delete() \
                     .where(self.table.API_KEY == self.data['api_key'])
