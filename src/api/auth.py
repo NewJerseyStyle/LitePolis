@@ -80,9 +80,9 @@ def is_valid_uuid(uuid_to_test, version=4):
      Examples
     --------
     >>> is_valid_uuid('c9bf9e57-1685-4c89-bafb-ff5af830be8a')
-    >>> True
+    True
     >>> is_valid_uuid('c9bf9e58')
-    >>> False
+    False
     """
     
     try:
