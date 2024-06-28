@@ -24,7 +24,11 @@ We will have a deep dive in the technology used in database and detail of each t
 Database Type: StarRocks, data lake, support SQL
 
 ![](https://github.com/NewJerseyStyle/LitePolis/blob/release/doc/db-light.png?raw=true)
+
 The database talbes and columns. [DBML available as reference](db.dbml)
+
+> ℹ️ Consider `commentdata` as the fact table in Star schema,
+> so the `userdata` and `conversationdata` are the dimension tables.
 
 ## Schema
 ### `userdata`
@@ -80,12 +84,6 @@ Table contains API keys issued to users, allowing them to access the API.
 |USER_ID|INT     |Foreign key referencing the `ID` column in `userdata`, identifies the user who owns the API key, required|
 
 ## Future work
-The database will be divided into two, for write-only and read-only to ensure the easy in scaling
-for data mining and data analysis work. Triggers or data processing frameworks `Flink` will be used
-to bridge the write-only database and the read-only database.
-
-> ⚠️ Above plan may not be accurate as alternative can be adopting Star schema or Snowflake schema
-
 The table `userdata` will not be used for login after beta version release.
 Login and access control will then relay on OpenID solution with OIDC server.
 
