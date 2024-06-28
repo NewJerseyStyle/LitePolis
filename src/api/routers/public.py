@@ -8,13 +8,11 @@ Example:
 To use this module in your FastAPI application, import the router and include
 it in your main application.
 
-.. highlight:: python
-.. code-block:: python
-    from fastapi import FastAPI
-    from health_check import router
+>>> from fastapi import FastAPI
+>>> from health_check import router
 
-    app = FastAPI()
-    app.include_router(router)
+>>> app = FastAPI()
+>>> app.include_router(router)
 """
 
 from fastapi import APIRouter
