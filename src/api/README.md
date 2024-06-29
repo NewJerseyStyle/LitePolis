@@ -1,16 +1,14 @@
-Developer doc
+# Developer doc
 
-DB spec
+- [DB spec](../../doc/database.md)
+- [API spec](../../doc/api)
 
-API spec
-
-generating client with `openapi-generator`
-
-get json from `localhost:8000/openapi.json`
+## Generating API client with `openapi-generator`
+1. get json from `localhost:8000/openapi.json`
 ```bash
 wget http://localhost:8000/openapi.json
 ```
-use docker image
+2. Generate API client using `openapi-generator` docker image
 ```bash
 docker run --rm -v ${PWD}:/local openapitools/openapi-generator-cli generate \
                 -i /local/openapi.json \
