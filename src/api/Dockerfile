@@ -9,7 +9,7 @@ ARG API_KEY="apikey"
 
 WORKDIR /code
 
-COPY api/* .
+COPY . .
 RUN pip install -Uq pip
 RUN pip install -Uq requirements.txt
 
