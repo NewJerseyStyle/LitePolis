@@ -185,7 +185,7 @@ async def update_usertoken(user: dict = Depends(get_user)):
     return ResponseMessage(message='New API Key',
                            detail=new_api_key)
 
-if os.environ['ui'] == 'streamlit':
+if os.environ['UI'] == 'streamlit':
     @router.get("/users/auth") # hidden for streamlit before beta version
     async def get_userauth(user: dict = Depends(get_user)):
         # collect all user password pair for streamlit auth
