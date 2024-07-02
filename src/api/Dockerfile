@@ -10,7 +10,7 @@ ARG API_KEY="apikey"
 WORKDIR /code
 
 COPY . .
-RUN pip install -Uq pip
-RUN pip install -rq requirements.txt
+RUN pip install -U pip
+RUN pip install -r requirements.txt
 
 CMD ["fastapi", "run", "/code/main.py"]
