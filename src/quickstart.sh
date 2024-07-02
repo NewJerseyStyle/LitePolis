@@ -10,7 +10,9 @@ until [ "`docker inspect -f {{.State.Running}} quickstart`"=="true" ]; do
 done;
 
 docker exec -i quickstart \
-            mysql -P 9030 -h quickstart -u root --prompt="StarRocks > " < db.sql
+            mysql -P 9030 \
+            -h localhost -u root \
+            --prompt="StarRocks > " < db.sql
 
 docker run --net litepolis-net --name api -d -p 8000:8000 \
                               -e SQLUSER="root" \
