@@ -11,6 +11,6 @@ WORKDIR /code
 
 COPY . .
 RUN pip install -Uq pip
-RUN pip install -Uq requirements.txt
+RUN pip install -rq requirements.txt
 
 CMD ["fastapi", "run", "/code/main.py"]
