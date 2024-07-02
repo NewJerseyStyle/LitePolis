@@ -1,11 +1,11 @@
 FROM python:3.11
 
-ARG UI="streamlit"
-ARG SQLUSER="apiuser"
-ARG SQLPASS="sqlpass"
-ARG SQLHOST="localhost"
-ARG SQLPORT="9030"
-ARG API_KEY="apikey"
+ENV UI="streamlit"
+ENV SQLUSER="apiuser"
+ENV SQLPASS="sqlpass"
+ENV SQLHOST="localhost"
+ENV SQLPORT="9030"
+ENV API_KEY="apikey"
 
 WORKDIR /code
 
