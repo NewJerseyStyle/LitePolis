@@ -1,3 +1,5 @@
+docker build -t litepolis/api api/
+
 docker network create litepolis-net
 
 docker run --net litepolis-net -p 9030:9030 -d -p 8030:8030 -p 8040:8040 \
