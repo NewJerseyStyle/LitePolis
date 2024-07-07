@@ -189,7 +189,23 @@ if os.environ['UI'] == 'streamlit':
     @router.get("/users/auth") # hidden for streamlit before beta version
     async def get_userauth(user: dict = Depends(get_user)):
         # collect all user password pair for streamlit auth
-        return {'detail': 'useryaml'}
+        return {'detail':
+                {'credentials':
+                 {'usernames': [
+                     'root': {
+                         'email': 'root',
+                         'failed_login_attempts': 0,
+                         'logged_in': False,
+                         'name': 'root',
+                         'password': 'plaintext'
+                     }
+                 ]},
+                 'cookie': {
+                     'expiry_days': 30,
+                     'key': 'a4d7db20a465c5d4af0312a04d5167b45c32dde4',
+                     'name': 'litepolis-cookie'}
+                }
+               }
 
 @router.get("/users/profile", tags=["User"], response_model=ResponseMessage)
 async def get_userprofile(user: dict = Depends(get_user)):
