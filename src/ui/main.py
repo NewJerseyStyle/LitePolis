@@ -1,6 +1,8 @@
 import streamlit as st
 from streamlit_cookies_controller import CookieController
 
+import litepolis_client
+
 controller = CookieController()
 
 # login
@@ -11,6 +13,7 @@ with tab1:
         st.text_input('The conversation ID#', '')
         if st.form_submit_button('Submit my picks'):
             # use client SDK access API get comments of conversation
+            litepolis_client.ConversationApi.
             st.switch_page("pages/portal.py")
 with tab2:
     if controller.get('litepolis.ac.apikey'):
@@ -22,11 +25,11 @@ with tab2:
     with st.form("login"):
         # login
         email = st.text_input('email', 'email-address@domain.com')
-        email = st.text_input('password', '********', type="password")
+        passwd = st.text_input('password', '********', type="password")
         # client SDK login fail
-        # registration
-        # if no such email, ask for 2password + 1username
-        # except Exception as e:
-        #     st.error(e)
-        
-        controller.set('litepolis.ac.apikey', 'key')
+        key = "" #litepolis_client.UserApi.verify return detail
+        if key is None:
+            # registration
+            # ask for type again password + 1username
+        else:
+            controller.set('litepolis.ac.apikey', key)
