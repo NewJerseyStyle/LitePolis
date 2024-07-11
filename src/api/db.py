@@ -181,6 +181,20 @@ class Users:
         self.data['privilege'] = privilege
 
     @staticmethod
+    def verify_user(id: int, passwd: str):
+        query = Query.from_(Users.table) \
+                    .select(Users.table.ID) \
+                    .where(Users.table.ID == id) \
+                    .where(Users.table.PASSWORD == passwd)
+        try:
+            cursor.execute(query.get_sql().replace('"', ''))
+        except mysql.connector.Error as err:
+            print("query data failed. {}".format(err))
+        result = cursor.fetchone()
+        return result if result is None else result[0]
+
+
+    @staticmethod
     def get_user_id_from_email(email: str):
         """Retrieves the user ID from the database based on the email address.
 
@@ -1007,7 +1021,7 @@ class API_Keys:
 
     Parameters
     ----------
-    apikey : str
+    api_key : str
         The API key.
     user_id : int, optional
         The user ID associated with the API key.
@@ -1032,7 +1046,7 @@ class API_Keys:
     --------
     .. highlight:: python
     .. code-block:: python
-        api_key = API_Keys(apikey='my_api_key', user_id=1)
+        api_key = API_Keys(api_key='my_api_key', user_id=1)
         api_key.create()
         api_key.get_user_id_from_apikey()
         # 1
@@ -1040,17 +1054,17 @@ class API_Keys:
         api_key.expire()
     """
     table = Table('apikeys')
-    def __init__(self, apikey: str, user_id: int = None):
+    def __init__(self, api_key: str, user_id: int = None):
         """Initializes an API key object.
 
         This method initializes an API key object with the provided API key and
         user ID. If no user ID is provided, it defaults to None and assuming
-        that you want to expire the apikey or you are trying to find the record
-        of the user associated with the apikey.
+        that you want to expire the api_key or you are trying to find the record
+        of the user associated with the api_key.
 
         Parameters
         ----------
-        apikey : str
+        api_key : str
             The API key.
         user_id : int, optional
             The user ID associated with the API key. Defaults to None.
@@ -1059,10 +1073,10 @@ class API_Keys:
         --------
         .. highlight:: python
         .. code-block:: python
-            api_key = API_Keys(apikey='my_api_key', user_id=1)
+            api_key = API_Keys(api_key='my_api_key', user_id=1)
         """
         self.data = dict()
-        self.data['api_key'] = apikey
+        self.data['api_key'] = api_key
         if user_id is not None:
             self.data['user_id'] = user_id
 
@@ -1082,7 +1096,7 @@ class API_Keys:
         --------
         .. highlight:: python
         .. code-block:: python
-            api_key = API_Keys(apikey='my_api_key', user_id=1)
+            api_key = API_Keys(api_key='my_api_key', user_id=1)
             api_key.get_user_id_from_apikey()
         """
         query = Query.from_(self.table).select(self.table.USER_ID) \
@@ -1106,11 +1120,12 @@ class API_Keys:
         --------
         .. highlight:: python
         .. code-block:: python
-            api_key = API_Keys(apikey='my_api_key', user_id=1)
+            api_key = API_Keys(api_key='my_api_key', user_id=1)
             api_key.create()
         """
         # validate for create
         assert 'user_id' in self.data
+        assert 'api_key' in self.data
         query = Query.into(self.table) \
                     .columns(*self.data.keys()) \
                     .insert(*self.data.values())
@@ -1129,7 +1144,7 @@ class API_Keys:
         --------
         .. highlight:: python
         .. code-block:: python
-            api_key = API_Keys(apikey='my_api_key', user_id=1)
+            api_key = API_Keys(api_key='my_api_key', user_id=1)
             api_key.update()
         """
         # validate for update
@@ -1154,7 +1169,7 @@ class API_Keys:
         --------
         .. highlight:: python
         .. code-block:: python
-            api_key = API_Keys(apikey='my_api_key', user_id=1)
+            api_key = API_Keys(api_key='my_api_key', user_id=1)
             api_key.expire()
         """
         query = Query.from_(self.table).delete() \
