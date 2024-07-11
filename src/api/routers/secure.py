@@ -178,34 +178,37 @@ async def update_usertoken(user: dict = Depends(get_user)):
     api_key_not_updated = True
     while api_key_not_updated:
         new_api_key = str(uuid.uuid4())
-        api_keys = API_Keys(new_api_key, user['id'])
-        if api_keys.get_user_id_from_apikey() is None:
-            api_keys.update()
+        api_key = API_Keys(new_api_key, user['id'])
+        if api_key.get_user_id_from_apikey() is None:
+            api_key.update()
             api_key_not_updated = False
     return ResponseMessage(message='New API Key',
                            detail=new_api_key)
 
-if os.environ['UI'] == 'streamlit':
-    @router.get("/users/auth") # hidden for streamlit before beta version
-    async def get_userauth(user: dict = Depends(get_user)):
-        # collect all user password pair for streamlit auth
-        return {'detail':
-                {'credentials':
-                 {'usernames': [
-                     'root': {
-                         'email': 'root',
-                         'failed_login_attempts': 0,
-                         'logged_in': False,
-                         'name': 'root',
-                         'password': 'plaintext'
-                     }
-                 ]},
-                 'cookie': {
-                     'expiry_days': 30,
-                     'key': 'a4d7db20a465c5d4af0312a04d5167b45c32dde4',
-                     'name': 'litepolis-cookie'}
-                }
-               }
+@router.post("/users/auth", tags=["User"],
+            response_model=ResponseMessage)
+async def get_userauth(user_profile: UserProfile,
+                       user: dict = Depends(get_user)):
+    # user is the default user with ClientSideAPIKey
+    assert user['role'] == 'GUI'
+    User(email=user_profile.email,
+         password=user_profile.password)
+    uid = User.get_user_id_from_email(user_profile.email)
+    if uid is None:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+        # return ResponseMessage(message="User information",
+        #                        detail="None")
+    if User.verify_user(id=uid, passwd=user_profile.password) is None:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    api_key_not_updated = True
+    while api_key_not_updated:
+        new_api_key = str(uuid.uuid4())
+        api_key = API_Keys(new_api_key, user['id'])
+        if api_key.get_user_id_from_apikey() is None:
+            api_key.create()
+            api_key_not_updated = False
+    return ResponseMessage(message='New API Key',
+                           detail=new_api_key)
 
 @router.get("/users/profile", tags=["User"], response_model=ResponseMessage)
 async def get_userprofile(user: dict = Depends(get_user)):
