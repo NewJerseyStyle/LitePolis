@@ -1,17 +1,10 @@
 import streamlit as st
-import streamlit_authenticator as stauth
+from streamlit_cookies_controller import CookieController
 
-st.write(
-    st.session_state["teset"])
-st.write(
-    st.session_state["wow"])
-
-if "teset" not in st.session_state:
-    st.session_state["teset"] = 1
-st.session_state["teset"] += 1
+controller = CookieController()
 
 # login
-tab1, tab2 = st.tabs(["Join conversation", "Login"])
+tab1, tab2 = st.tabs(["Join conversation", "Login or register"])
 # input conversation id
 with tab1:
     with st.form("join_conversation"):
@@ -20,34 +13,20 @@ with tab1:
             # use client SDK access API get comments of conversation
             st.switch_page("pages/portal.py")
 with tab2:
-    # config from yaml loads (db query
-    authenticator = stauth.Authenticate(
-        config['credentials'],
-        config['cookie']['name'],
-        config['cookie']['key'],
-        config['cookie']['expiry_days'],
-        config['pre-authorized']
-    )
-    # login
-    authenticator.login()
-    # registration
-    try:
-        email, _, _ = authenticator.register_user(
-          pre_authorization=False,
-          fields={
-            'Form name':'Register or Reset password',
-            'Email':'Email',
-            # 'Username':'Username',
-            'Password':'Password',
-            'Repeat password':'Repeat password',
-            'Register':'Register'})
-        if email:
-            st.success('User registered successfully')
-    except Exception as e:
-        st.error(e)
-    
-    if st.session_state["authentication_status"]:
-        if db query st.session_state["email"] role is "root":
-            st.switch_page("pages/dashboard.py")
-        else:
-            st.switch_page("pages/portal.py")
+    if controller.get('litepolis.ac.apikey'):
+        pass # use client SDK
+        # if db query st.session_state["email"] role is "root":
+        #     st.switch_page("pages/dashboard.py")
+        # else:
+        #     st.switch_page("pages/portal.py")
+    with st.form("login"):
+        # login
+        email = st.text_input('email', 'email-address@domain.com')
+        email = st.text_input('password', '********', type="password")
+        # client SDK login fail
+        # registration
+        # if no such email, ask for 2password + 1username
+        # except Exception as e:
+        #     st.error(e)
+        
+        controller.set('litepolis.ac.apikey', 'key')
