@@ -199,7 +199,7 @@ async def get_userauth(user_profile: UserProfile,
         # return ResponseMessage(message="User information",
         #                        detail="None")
     if User.verify_user(id=uid, passwd=user_profile.password) is None:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+        raise HTTPException(status_code=403, detail="Unauthorized")
     api_key_not_updated = True
     while api_key_not_updated:
         new_api_key = str(uuid.uuid4())
