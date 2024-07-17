@@ -58,8 +58,8 @@ with tab2:
 
     with st.form("login"):
         # login
-        email = st.text_input('email', 'email-address@domain.com')
-        passwd = st.text_input('password', '********', type="password")
+        email = st.text_input('email', placeholder='email-address@domain.com')
+        passwd = st.text_input('password', placeholder='********', type="password")
         # client SDK login fail
         passwd = hashlib.md5(passwd.encode()).hexdigest()
         configuration.api_key['APIKeyHeader'] = os.environ["API_KEY"]
