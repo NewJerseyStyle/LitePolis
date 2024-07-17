@@ -60,7 +60,7 @@ with tab2:
         email = st.text_input('email', 'email-address@domain.com')
         passwd = st.text_input('password', '********', type="password")
         # client SDK login fail
-        passwd = hashlib.md5(passwd.encode())hexdigest()
+        passwd = hashlib.md5(passwd.encode()).hexdigest()
         configuration.api_key['APIKeyHeader'] = os.environ["API_KEY"]
         configuration.api_key_prefix['APIKeyHeader'] = 'Bearer'
         with litepolis_client.ApiClient(configuration) as api_client:
