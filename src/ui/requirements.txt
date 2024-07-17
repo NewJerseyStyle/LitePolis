@@ -1,2 +1,2 @@
 streamlit
-streamlit-cookie-controller
+streamlit-cookies-controller
