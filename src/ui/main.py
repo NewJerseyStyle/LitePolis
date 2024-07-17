@@ -34,9 +34,8 @@ with tab1:
                 if api_response.status_code == 200:
                     print(api_response)
             st.session_state['conversation_id'] = conversation_id
-            if not controller.get('litepolis.ac.apikey'):
-                # not login create api key goto portal
-                pass
+            if controller.get('litepolis.ac.apikey'):
+                st.session_state['apikey'] = controller.get('litepolis.ac.apikey')
             st.switch_page("pages/portal.py")
 with tab2:
     if controller.get('litepolis.ac.apikey'):
