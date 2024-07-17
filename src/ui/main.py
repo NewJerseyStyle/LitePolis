@@ -49,7 +49,7 @@ with tab2:
             api_instance = litepolis_client.UserApi(api_client)
             try:
                 api_response = api_instance.get_userrole_api_v1_secure_users_role_get()
-                if api_response["detail"]["role"] is "root":
+                if api_response["detail"]["role"] == "root":
                     st.switch_page("pages/dashboard.py")
                 else:
                     st.switch_page("pages/portal.py")
