@@ -257,11 +257,13 @@ async def create_userprofile(user_profile: UserProfile,
         Authenticated user information.
     """
     # Validation
-    if None  in [user_profile.email, user_profile.password]:
+    if None in [user_profile.email, user_profile.password]:
         raise HTTPException(status_code=400, detail="Invalid password")
     # Sanitization
-    if Users.get_user_id_from_email(user_profile.email) is not None:
-        raise HTTPException(status_code=400, detail="Invalid email")
+    if (user['role'] == 'guest' and
+        Users.get_user_id_from_email(user.email) is not None):
+        user['role'] = 'user'
+        update_userprofile(user_profile, user)
     data = {
         'email': user_profile.email,
         'password': hashlib.sha1(user_profile.password.encode()).hexdigest()
@@ -374,6 +376,8 @@ async def update_conversation(update_conversation: ConversationModel,
     user : dict
         Authenticated user information.
     """
+    if user['role'] not in ['user']:
+        raise HTTPException(status_code=401, detail="Unauthorized")
     if update_conversation.id is None:
         raise HTTPException(status_code=400, detail="Invalid parameter")
     data = {
@@ -453,7 +457,7 @@ async def create_comment(comment: CommentModel,
                          user: dict = Depends(get_user)):
     """Create a new comment.
     """
-    if user['role'] != 'user':
+    if user['role'] not in ['guest', 'user']:
         raise HTTPException(status_code=401, detail="Unauthorized")
     if None in [comment.comment,
                 comment.conversation_id]:

@@ -23,7 +23,7 @@ Above example is the default example function of `route.secure`
 the endpoints that required API key to access where this project start.
 """
 
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import Security, HTTPException, status
 from fastapi.security import APIKeyHeader
@@ -59,10 +59,16 @@ def get_user(api_key_header: str = Security(api_key_header)):
         user = Users.get_user_from_api_key(api_key_header)
         if user is not None:
             return user
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Missing or invalid API key"
-    )
+    user_email = f"{str(uuid4())}@localhost"
+    user = Users(user_email, str(uuid4()), "guest")
+    user.create()
+    user_id = user.get_user_id_from_email(user_email)
+    new_api_key = str(uuid4())
+    while api_key.get_user_id_from_apikey(new_api_key):
+        new_api_key = str(uuid4())
+    api_key = API_Keys(api_key=new_api_key, user_id=user_id)
+    api_key.create()
+    return user
 
 
 def is_valid_uuid(uuid_to_test, version=4):
