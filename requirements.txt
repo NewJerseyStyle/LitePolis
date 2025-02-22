@@ -1,0 +1,7 @@
+fastapi
+fastapi-authz
+mysql-connector-python
+pypika
+email-validator
+httpx
+pytest

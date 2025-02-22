@@ -1,0 +1,13 @@
+p, user, /dataset1/*, GET
+p, user, /...converation..., GET
+
+p, admin, *, *
+
+p, moderator, /dataset2/resource1, *
+
+p, *, /login, *
+
+p, anonymous, /, GET
+p, anonymous, /...converation..., GET
+
+g, cathy, dataset1_admin
