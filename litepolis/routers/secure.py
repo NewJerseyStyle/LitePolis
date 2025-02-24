@@ -8,7 +8,7 @@ from pydantic import BaseModel, EmailStr
 from fastapi import APIRouter, Depends
 from fastapi import HTTPException
 
-from auth import get_user
+from middleware.BasicHeaderAuth import get_user
 from db import API_Keys
 from db import Users
 from db import Conversations

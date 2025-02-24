@@ -1,6 +1,7 @@
 fastapi
 fastapi-authz
 mysql-connector-python
+ray[serve]
 pypika
 email-validator
 httpx

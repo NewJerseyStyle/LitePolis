@@ -105,25 +105,25 @@ class TestComments(unittest.TestCase):
 
 class TestAPI_Keys(unittest.TestCase):
     def test_init(self):
-        api_key = API_Keys(apikey='my_api_key', user_id=1)
+        api_key = API_Keys(api_key='my_api_key', user_id=1)
         self.assertEqual(api_key.data, {'api_key': 'my_api_key', 'user_id': 1})
 
     def test_create(self):
-        api_key = API_Keys(apikey='my_api_key', user_id=1)
+        api_key = API_Keys(api_key='my_api_key', user_id=1)
         api_key.create()
         # verify that the API key is created in the database
         self.assertEqual(api_key.get_user_id_from_apikey(), 1)
 
     def test_update(self):
-        api_key = API_Keys(apikey='my_api_key2', user_id=1)
+        api_key = API_Keys(api_key='my_api_key2', user_id=1)
         api_key.update()
         # verify that the API key is updated in the database
         self.assertEqual(api_key.get_user_id_from_apikey(), 1)
-        api_key_old = API_Keys(apikey='my_api_key', user_id=1)
+        api_key_old = API_Keys(api_key='my_api_key', user_id=1)
         self.assertEqual(api_key_old.get_user_id_from_apikey(), None)
 
     def test_expire(self):
-        api_key = API_Keys(apikey='my_api_key', user_id=1)
+        api_key = API_Keys(api_key='my_api_key', user_id=1)
         api_key.expire()
         self.assertEqual(api_key.get_user_id_from_apikey(), None)
 
