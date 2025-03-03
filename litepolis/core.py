@@ -4,10 +4,11 @@ import argparse
 import importlib
 import subprocess
 
+import ray
 from ray import serve
 from fastapi import FastAPI
 
-from routers import public
+from .routers import public
 
 
 logging.basicConfig(filename='litepolis.log', level=logging.INFO, 
@@ -22,7 +23,7 @@ parser.add_argument("--remove-deps", type=list, default=[], help="Remove a litep
 # --init-router
 # --init-middleware
 # --init-ui
-parser.add_argument("--serve", action='store_true', help="Start LitePolis API service.")
+parser.add_argument("--serve", type=str, default="", help="Start LitePolis API service on given Ray cluster.")
 args = parser.parse_args()
 
 app = FastAPI()
@@ -120,10 +121,9 @@ def main():
     elif len(args.remove_deps):
         for package in args.remove_deps:
             rm_deps(package)
-    else:
-        args.serve = True
+    elif len(args.serve):
+        ray.init(address=args.serve)
 
-    if args.serve:
         packages = []
         with open(args.use_deps_file) as f:
             for line in f.readlines():
