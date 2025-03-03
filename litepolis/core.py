@@ -122,11 +122,7 @@ def remove_deps(ctx, packages: tuple[str, ...]):
                 f.write('\n'.join(exist_packages))
 
 
-@deploy.command()
-@click.pass_context
-def serve(ctx):
-    ray.init(address=ctx['cluster'])
-
+def get_apps(ctx, monolithic=False):
     packages = []
     with open(ctx['packages_file']) as f:
         for line in f.readlines():
@@ -154,7 +150,6 @@ def serve(ctx):
     for line in user_interfaces:
         pass
 
-    access_control_policies = []
     for line in routers + user_interfaces:
         m = importlib.import_module(line)
         try:
@@ -177,6 +172,16 @@ def serve(ctx):
         public.router,
         prefix="/api/v1/public"
     )
+
+    return [app]
+
+
+@deploy.command()
+@click.pass_context
+def serve(ctx):
+    ray.init(address=ctx['cluster'])
+
+    app = get_apps(ctx)
 
     @serve.deployment
     @serve.ingress(app)
@@ -210,14 +215,13 @@ def ui():
 def main():
     cli(obj={})
 
-if __name__ == '__main__':
-    from click.testing import CliRunner
-    runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        [
-            'deploy', 'serve',
-            '--packages-file', '~/.litepolis/packages.txt',
-            '--cluster', 'auto'
-        ]
+
+def get_test_app():
+    return get_apps(
+        {'packages_file': '~/.litepolis/packages.txt'},
+        monolithic=True
     )
+
+
+if __name__ == '__main__':
+    main()
