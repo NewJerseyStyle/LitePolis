@@ -1,6 +1,0 @@
-fastapi
-mysql-connector-python
-pypika
-email-validator
-httpx
-pytest
