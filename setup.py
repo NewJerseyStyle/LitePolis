@@ -9,8 +9,8 @@ with open('LICENSE') as f:
 
 setup(
     name='litepolis',
-    version="v0.0.1",
-    description='Replicating `civictechto/polis`, built using Python and optimized for scalability and performance.',
+    version="v0.0.2",
+    description='The package manager and core module for LitePolis',
     long_description=readme,
     long_description_content_type="text/markdown",
     author='Yuan XU',
@@ -18,13 +18,17 @@ setup(
     url='https://github.com/NewJerseyStyle/LitePolis',
     license=license,
     packages=find_packages(exclude=('tests', 'docs')),
-    # install_requires=['pydantic', 'ollama'],
-    # entry_points={
-    #     'console_scripts': [
-    #         'ollama-tools=ollama_tools.server:main',
-    #     ],
-    # },
-    # extras_require={
-    #     'full': ['fastapi', 'uvicorn'],
-    # },
+    install_requires=['fastapi', 'ray[serve]'],
+    entry_points={
+        'console_scripts': [
+            'litepolis-cli=litepolis.core:main',
+        ],
+    },
+    extras_require={
+        'demo': [
+            'litepolis-router-example',
+            'litepolis-middleware-example',
+            'litepolis-ui-example'
+        ],
+    },
 )
