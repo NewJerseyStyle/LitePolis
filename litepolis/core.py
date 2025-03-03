@@ -1,30 +1,18 @@
 import os
 import logging
-import argparse
 import importlib
 import subprocess
 
 import ray
 from ray import serve
 from fastapi import FastAPI
+import click
 
 from .routers import public
 
 
 logging.basicConfig(filename='litepolis.log', level=logging.INFO, 
                     format='%(asctime)s - %(levelname)s - %(message)s')
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--use-deps-file", type=str, default="~/.litepolis/litepolis-pypi-deps.txt",
-                    help="The file listing all litepolis packages needed.")
-parser.add_argument("--list-deps", action='store_true', help="List all litepolis packages in deps.")
-parser.add_argument("--add-deps", type=list, default=[], help="Add a litepolis packages to deps.")
-parser.add_argument("--remove-deps", type=list, default=[], help="Remove a litepolis packages from deps.")
-# --init-router
-# --init-middleware
-# --init-ui
-parser.add_argument("--serve", type=str, default="", help="Start LitePolis API service on given Ray cluster.")
-args = parser.parse_args()
 
 app = FastAPI()
 
@@ -40,39 +28,49 @@ def check_import(package):
                                 " or you may need to build from source.")
 
 
-def add_deps(package):
-    check_import(package)
-    with open(args.use_deps_file, 'r') as f:
-        lines = f.readlines()
-    packages = []
-    for line in lines:
-        line = line.strip()
-        if line and not line.startswith('#'):
-            if '-' in line:
-                line = line.replace('-', '_')
-            if 'litepolis_' in line.lower():
-                packages.append(line)
-    if package not in packages:
-        with open(args.use_deps_file, 'a') as f:
-            f.write(f"{package}\n")
+@click.group()
+@click.pass_context
+def cli():
+    """Start the LitePolis service."""
+    pass
 
+@cli.group()
+@click.option("--packages-file", type=str, default="~/.litepolis/packages.txt",
+                    help="The file listing all litepolis packages needed.")
+@click.option("--cluster", type=str, default="auto",
+                    help="Start LitePolis API service on given Ray cluster.")
+@click.pass_context
+def deploy(ctx, packages_file, cluster):
+    ctx.ensure_object(dict)
+    packages_file = os.path.expanduser(packages_file)
+    ctx.obj['packages_file'] = packages_file
+    ctx.obj['cluster'] = cluster
+    if not os.path.exists(packages_file):
+        os.makedirs(os.path.dirname(packages_file), exist_ok=True)
+        with open(packages_file, 'w') as f:
+            # f.write('litepolis-router-example\n')
+            # f.write('litepolis-middleware-example\n')
+            # f.write('litepolis-ui-example\n')
+            # if package API not backward compatible, rename to new package e.g. litepolis-router-example-v2
+            pass
 
-def list_deps():
-    with open(args.use_deps_file) as f:
+@deploy.command()
+@click.pass_context
+def list_deps(ctx):
+    with open(ctx.obj['packages_file']) as f:
         result = subprocess.run(['pip', 'list'],
                                 capture_output=True,
                                 text=True, check=True)
         pip_packages = []
         for line in result.stdout.split('\n'):
             line = line.strip()
-            if line and not line.startswith('#'):
-                if '-' in line:
-                    line = line.replace('-', '_')
-                if 'litepolis_' in line.lower():
-                    pip_packages.append(line)
+            if '-' in line:
+                line = line.replace('-', '_')
+            if 'litepolis_' in line.lower():
+                pip_packages.append(line)
         for line in f.readlines():
             line = line.strip()
-            if line and not line.startswith('#'):
+            if len(line) and not line.startswith('#'):
                 if '-' in line:
                     line = line.replace('-', '_')
                 package = line.strip()
@@ -82,105 +80,144 @@ def list_deps():
                         print(pip_package)
                         break
 
+@deploy.command()
+@click.argument('package')
+@click.pass_context
+def add_deps(ctx, packages: tuple[str, ...]):
+    exist_packages = []
+    with open(ctx.obj['packages_file'], 'r') as f:
+        for line in f.readlines():
+            line = line.strip()
+            if len(line) and not line.startswith('#'):
+                if '-' in line:
+                    line = line.replace('-', '_')
+                if 'litepolis_' in line.lower():
+                    exist_packages.append(line)
+    for package in packages:
+        check_import(package)
+        if package not in exist_packages:
+            with open(ctx.obj['packages_file'], 'a') as f:
+                f.write(f"{package}\n")
 
-def rm_deps(package):
-    with open(args.use_deps_file, 'r') as f:
+@deploy.command()
+@click.argument('package')
+@click.pass_context
+def remove_deps(ctx, packages: tuple[str, ...]):
+    with open(ctx.obj['packages_file'], 'r') as f:
         lines = f.readlines()
-    packages = []
+    exist_packages = []
     for line in lines:
         line = line.strip()
-        if line and not line.startswith('#'):
+        if len(line) and not line.startswith('#'):
             if '-' in line:
                 line = line.replace('-', '_')
             if 'litepolis_' in line.lower():
-                packages.append(line)
-    if package not in packages:
-        raise ValueError(f"Package '{package}' not found in dependencies file.")
-    else:
-        packages.remove(package)
-        with open(args.use_deps_file, 'w') as f:
-            f.write('\n'.join(packages))
+                exist_packages.append(line)
+    for package in packages:
+        if package not in exist_packages:
+            raise ValueError(f"Package '{package}' not found in dependencies file.")
+        else:
+            exist_packages.remove(package)
+            with open(ctx.obj['packages_file'], 'w') as f:
+                f.write('\n'.join(exist_packages))
+
+
+@deploy.command()
+@click.pass_context
+def serve(ctx):
+    ray.init(address=ctx['cluster'])
+
+    packages = []
+    with open(ctx['packages_file']) as f:
+        for line in f.readlines():
+            line = line.strip()
+            if len(line) and not line.startswith('#'):
+                check_import(line)
+                if '-' in line:
+                    line = line.replace('-', '_')
+                if '_' in line:
+                    packages.append(line)
+
+    routers = []
+    middlewares = []
+    user_interfaces = []
+    for line in packages:
+        package = line.split('_')
+        if package[0] == 'litepolis':
+            if package[1] == 'router':
+                routers.append(line)
+            elif package[1] == 'middleware':
+                middlewares.append(line)
+            elif package[1] == 'ui':
+                user_interfaces.append(line)
+
+    for line in user_interfaces:
+        pass
+
+    access_control_policies = []
+    for line in routers + user_interfaces:
+        m = importlib.import_module(line)
+        try:
+            app.include_router(
+                m.router,
+                prefix=m.prefix, #prefix = package_name of the extract module
+                dependencies=m.dependencies
+            )
+        except Exception as e:
+            logging.exception(f"Error importing router {line}: {e}")
+
+    for line in middlewares:
+        m = importlib.import_module(line)
+        try:
+            m.add_middleware(app)
+        except Exception as e:
+            logging.exception(f"Error importing middleware {line}: {e}")
+
+    app.include_router(
+        public.router,
+        prefix="/api/v1/public"
+    )
+
+    @serve.deployment
+    @serve.ingress(app)
+    class FastAPIWrapper:
+        pass
+
+    serve.run(FastAPIWrapper.bind(), route_prefix="/")
+
+
+@cli.group()
+def create():
+    """Initialize a new package from GitHub template repo."""
+    pass
+
+@create.command()
+def router():
+    """Initialize a new router package from GitHub templace repo."""
+    pass
+
+@create.command()
+def middleware():
+    """Initialize a new middleware package from GitHub templace repo."""
+    pass
+
+@create.command()
+def ui():
+    """Initialize a new UI component package from GitHub templace repo."""
+    pass
 
 
 def main():
-    if not os.path.exists(args.use_deps_file):
-        args.use_deps_file = os.path.expanduser(args.use_deps_file)
-        os.makedirs(os.path.dirname(args.use_deps_file), exist_ok=True)
-        with open(args.use_deps_file, 'w') as f:
-            # f.write('litepolis-router-example\n')
-            # f.write('litepolis-middleware-example\n')
-            # f.write('litepolis-ui-example\n')
-            # if package API not backward compatible, rename to new package e.g. litepolis-router-example-v2
-            pass
-
-    if args.list_deps:
-        list_deps()
-    elif len(args.add_deps):
-        for package in args.add_deps:
-            add_deps(package)
-    elif len(args.remove_deps):
-        for package in args.remove_deps:
-            rm_deps(package)
-    elif len(args.serve):
-        ray.init(address=args.serve)
-
-        packages = []
-        with open(args.use_deps_file) as f:
-            for line in f.readlines():
-                line = line.strip()
-                if line and not line.startswith('#'):
-                    check_import(line)
-                    if '-' in line:
-                        line = line.replace('-', '_')
-                    if '_' in line:
-                        packages.append(line)
-
-        routers = []
-        middlewares = []
-        user_interfaces = []
-        for line in packages:
-            package = line.split('_')
-            if package[0] == 'litepolis':
-                if package[1] == 'router':
-                    routers.append(line)
-                elif package[1] == 'middleware':
-                    middlewares.append(line)
-                elif package[1] == 'ui':
-                    user_interfaces.append(line)
-
-        for line in user_interfaces:
-            pass
-
-        access_control_policies = []
-        for line in routers + user_interfaces:
-            m = importlib.import_module(line)
-            try:
-                app.include_router(
-                    m.router,
-                    prefix=m.prefix, #prefix = package_name of the extract module
-                    dependencies=m.dependencies
-                )
-            except Exception as e:
-                logging.exception(f"Error importing router {line}: {e}")
-
-        for line in middlewares:
-            m = importlib.import_module(line)
-            try:
-                m.add_middleware(app)
-            except Exception as e:
-                logging.exception(f"Error importing middleware {line}: {e}")
-
-        app.include_router(
-            public.router,
-            prefix="/api/v1/public"
-        )
-
-        @serve.deployment
-        @serve.ingress(app)
-        class FastAPIWrapper:
-            pass
-
-        serve.run(FastAPIWrapper.bind(), route_prefix="/")
+    cli(obj={})
 
 if __name__ == '__main__':
-    main()
+    from click.testing import CliRunner
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            'deploy', 'serve',
+            '--packages-file', '~/.litepolis/packages.txt',
+            '--cluster', 'auto'
+        ]
+    )

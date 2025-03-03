@@ -1,8 +1,8 @@
 from fastapi.testclient import TestClient
 
-import core
+from .core import app
 
-client = TestClient(main.app)
+client = TestClient(app)
 
 def test_read_main():
     response = client.get("/api/v1/public/")

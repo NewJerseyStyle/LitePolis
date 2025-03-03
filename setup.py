@@ -27,6 +27,7 @@ setup(
     extras_require={
         'demo': [
             'litepolis-router-example',
+            'litepolis-router-database-example',
             'litepolis-middleware-example',
             'litepolis-ui-example'
         ],
