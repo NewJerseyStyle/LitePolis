@@ -1,6 +1,7 @@
 import os
 import importlib
 import subprocess
+import configparser
 
 import ray
 from ray import serve
@@ -8,6 +9,8 @@ from fastapi import FastAPI
 import click
 
 from .routers import public
+
+DEFAULT_CONFIG_PATH = '~/.litepolis/config.conf'
 
 app = FastAPI()
 
@@ -117,7 +120,45 @@ def remove_deps(ctx, package):
             f.write('\n'.join(packages))
 
 
+@deploy.command()
+@click.pass_context
+def init_config(ctx):
+    config = configparser.ConfigParser()
+    
+    packages = []
+    with open(ctx.obj['packages_file']) as f:
+        for line in f.readlines():
+            line = line.strip()
+            if len(line) and not line.startswith('#'):
+                check_import(line)
+                if '-' in line:
+                    line = line.replace('-', '_')
+                if '_' in line:
+                    package = line.split('_')
+                    if package[0] == 'litepolis':
+                        packages.append(line)
+    
+    for line in packages:
+        m = importlib.import_module(line)
+        config.add_section(line)
+        for k, v in m.DEFAULT_CONFIG.items():
+            config.set(line, k, v)
+
+    write_flag = True
+    prompt = f"Config file '{DEFAULT_CONFIG_PATH}' already exists. Overwrite?"
+    if os.path.exists(DEFAULT_CONFIG_PATH):
+        if not click.confirm(prompt):
+            write_flag = False
+    if write_flag:
+        with open(DEFAULT_CONFIG_PATH, 'w') as f:
+            config.write(f)
+
+    print(f"Now edit file '{DEFAULT_CONFIG_PATH}' to configure the server.")
+
 def get_apps(ctx, monolithic=False):
+    config = configparser.ConfigParser()
+    config.read(DEFAULT_CONFIG_PATH)
+
     packages = []
     with open(ctx.obj['packages_file']) as f:
         for line in f.readlines():
@@ -147,9 +188,10 @@ def get_apps(ctx, monolithic=False):
 
     for line in routers + user_interfaces:
         m = importlib.import_module(line)
+        router = m.init(config)
         try:
             app.include_router(
-                m.router,
+                router,
                 prefix=f'/api/{m.prefix}',
                 dependencies=m.dependencies
             )
@@ -159,7 +201,7 @@ def get_apps(ctx, monolithic=False):
     for line in middlewares:
         m = importlib.import_module(line)
         try:
-            m.add_middleware(app)
+            m.add_middleware(app, config)
         except Exception as e:
             print(f"Error importing middleware {line}: {e}")
 
@@ -169,6 +211,16 @@ def get_apps(ctx, monolithic=False):
     )
 
     return [app]
+
+
+def auto_init_local():
+    pass
+def auto_init_gcp():
+    pass
+def auto_init_azure():
+    pass
+def auto_init_aws():
+    pass
 
 
 @deploy.command("serve")
