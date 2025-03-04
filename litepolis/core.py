@@ -1,5 +1,4 @@
 import os
-import logging
 import importlib
 import subprocess
 
@@ -9,10 +8,6 @@ from fastapi import FastAPI
 import click
 
 from .routers import public
-
-
-logging.basicConfig(filename='litepolis.log', level=logging.INFO, 
-                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 app = FastAPI()
 
@@ -49,7 +44,7 @@ def deploy(ctx, packages_file, cluster):
     if not os.path.exists(packages_file):
         os.makedirs(os.path.dirname(packages_file), exist_ok=True)
         with open(packages_file, 'w') as f:
-            # f.write('litepolis-router-database\n')
+            f.write('litepolis-router-database\n')
             # f.write('litepolis-router-example\n')
             # f.write('litepolis-middleware-example\n')
             # f.write('litepolis-ui-example\n')
@@ -152,8 +147,6 @@ def get_apps(ctx, monolithic=False):
 
     for line in routers + user_interfaces:
         m = importlib.import_module(line)
-        print("m.router, m.prefix, m.dependencies")
-        print(m.router, m.prefix, m.dependencies)
         try:
             app.include_router(
                 m.router,
@@ -161,14 +154,14 @@ def get_apps(ctx, monolithic=False):
                 dependencies=m.dependencies
             )
         except Exception as e:
-            logging.exception(f"Error importing router {line}: {e}")
+            print(f"Error importing router {line}: {e}")
 
     for line in middlewares:
         m = importlib.import_module(line)
         try:
             m.add_middleware(app)
         except Exception as e:
-            logging.exception(f"Error importing middleware {line}: {e}")
+            print(f"Error importing middleware {line}: {e}")
 
     app.include_router(
         public.router,
@@ -199,19 +192,34 @@ def create():
     pass
 
 @create.command()
-def router():
+@click.argument('local_path')
+def router(local_path):
     """Initialize a new router package from GitHub templace repo."""
-    pass
+    import git
+
+    # Clone the repository
+    repo_url = "https://github.com/NewJerseyStyle/LitePolis-router-template.git"
+    repo = git.Repo.clone_from(repo_url, os.path.abspath(local_path))
 
 @create.command()
-def middleware():
+@click.argument('local_path')
+def middleware(local_path):
     """Initialize a new middleware package from GitHub templace repo."""
-    pass
+    import git
+
+    # Clone the repository
+    repo_url = "https://github.com/NewJerseyStyle/LitePolis-router-template.git"
+    repo = git.Repo.clone_from(repo_url, os.path.abspath(local_path))
 
 @create.command()
-def ui():
+@click.argument('local_path')
+def ui(local_path):
     """Initialize a new UI component package from GitHub templace repo."""
-    pass
+    import git
+
+    # Clone the repository
+    repo_url = "https://github.com/NewJerseyStyle/LitePolis-router-template.git"
+    repo = git.Repo.clone_from(repo_url, os.path.abspath(local_path))
 
 
 def main():
