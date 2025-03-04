@@ -157,7 +157,7 @@ def get_apps(ctx, monolithic=False):
         try:
             app.include_router(
                 m.router,
-                prefix=m.prefix,
+                prefix=f'/api/{m.prefix}',
                 dependencies=m.dependencies
             )
         except Exception as e:
@@ -172,7 +172,7 @@ def get_apps(ctx, monolithic=False):
 
     app.include_router(
         public.router,
-        prefix="/api/v1/public"
+        prefix="/api"
     )
 
     return [app]

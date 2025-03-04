@@ -6,7 +6,7 @@ app = get_test_app()
 client = TestClient(app)
 
 def test_read_main():
-    response = client.get("/api/v1/public/")
+    response = client.get("/api/")
     assert response.status_code == 200
     assert response.json() == {"detail": "OK"}
 
