@@ -30,8 +30,8 @@ def check_import(package):
 
 @click.group()
 @click.pass_context
-def cli():
-    """Start the LitePolis service."""
+def cli(ctx):
+    """The LitePolis CLI to help you integrate and deploy, or develop new module."""
     pass
 
 @cli.group()
@@ -41,6 +41,7 @@ def cli():
                     help="Start LitePolis API service on given Ray cluster.")
 @click.pass_context
 def deploy(ctx, packages_file, cluster):
+    """Start the LitePolis service."""
     ctx.ensure_object(dict)
     packages_file = os.path.expanduser(packages_file)
     ctx.obj['packages_file'] = packages_file
@@ -48,6 +49,7 @@ def deploy(ctx, packages_file, cluster):
     if not os.path.exists(packages_file):
         os.makedirs(os.path.dirname(packages_file), exist_ok=True)
         with open(packages_file, 'w') as f:
+            # f.write('litepolis-router-database\n')
             # f.write('litepolis-router-example\n')
             # f.write('litepolis-middleware-example\n')
             # f.write('litepolis-ui-example\n')
@@ -83,8 +85,8 @@ def list_deps(ctx):
 @deploy.command()
 @click.argument('package')
 @click.pass_context
-def add_deps(ctx, packages: tuple[str, ...]):
-    exist_packages = []
+def add_deps(ctx, package):
+    packages = []
     with open(ctx.obj['packages_file'], 'r') as f:
         for line in f.readlines():
             line = line.strip()
@@ -92,39 +94,37 @@ def add_deps(ctx, packages: tuple[str, ...]):
                 if '-' in line:
                     line = line.replace('-', '_')
                 if 'litepolis_' in line.lower():
-                    exist_packages.append(line)
-    for package in packages:
-        check_import(package)
-        if package not in exist_packages:
-            with open(ctx.obj['packages_file'], 'a') as f:
-                f.write(f"{package}\n")
+                    packages.append(line)
+    check_import(package)
+    if package not in packages:
+        with open(ctx.obj['packages_file'], 'a') as f:
+            f.write(f"{package}\n")
 
 @deploy.command()
 @click.argument('package')
 @click.pass_context
-def remove_deps(ctx, packages: tuple[str, ...]):
+def remove_deps(ctx, package):
     with open(ctx.obj['packages_file'], 'r') as f:
         lines = f.readlines()
-    exist_packages = []
+    packages = []
     for line in lines:
         line = line.strip()
         if len(line) and not line.startswith('#'):
             if '-' in line:
                 line = line.replace('-', '_')
             if 'litepolis_' in line.lower():
-                exist_packages.append(line)
-    for package in packages:
-        if package not in exist_packages:
-            raise ValueError(f"Package '{package}' not found in dependencies file.")
-        else:
-            exist_packages.remove(package)
-            with open(ctx.obj['packages_file'], 'w') as f:
-                f.write('\n'.join(exist_packages))
+                packages.append(line)
+    if package not in packages:
+        raise ValueError(f"Package '{package}' not found in dependencies file.")
+    else:
+        packages.remove(package)
+        with open(ctx.obj['packages_file'], 'w') as f:
+            f.write('\n'.join(packages))
 
 
 def get_apps(ctx, monolithic=False):
     packages = []
-    with open(ctx['packages_file']) as f:
+    with open(ctx.obj['packages_file']) as f:
         for line in f.readlines():
             line = line.strip()
             if len(line) and not line.startswith('#'):
@@ -152,10 +152,12 @@ def get_apps(ctx, monolithic=False):
 
     for line in routers + user_interfaces:
         m = importlib.import_module(line)
+        print("m.router, m.prefix, m.dependencies")
+        print(m.router, m.prefix, m.dependencies)
         try:
             app.include_router(
                 m.router,
-                prefix=m.prefix, #prefix = package_name of the extract module
+                prefix=m.prefix,
                 dependencies=m.dependencies
             )
         except Exception as e:
@@ -176,12 +178,12 @@ def get_apps(ctx, monolithic=False):
     return [app]
 
 
-@deploy.command()
+@deploy.command("serve")
 @click.pass_context
-def serve(ctx):
-    ray.init(address=ctx['cluster'])
+def serve_command(ctx):
+    ray.init(address=ctx.obj['cluster'])
 
-    app = get_apps(ctx)
+    app = get_apps(ctx)[0]
 
     @serve.deployment
     @serve.ingress(app)
@@ -217,10 +219,16 @@ def main():
 
 
 def get_test_app():
+    from pydantic import BaseModel
+
+    class ctx(BaseModel):
+        obj: dict
+
+    packages_file = os.path.expanduser('~/.litepolis/packages.txt')
     return get_apps(
-        {'packages_file': '~/.litepolis/packages.txt'},
+        ctx(obj={'packages_file': packages_file}),
         monolithic=True
-    )
+    )[0]
 
 
 if __name__ == '__main__':
