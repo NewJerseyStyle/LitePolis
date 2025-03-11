@@ -47,8 +47,8 @@ def deploy(ctx, packages_file, cluster):
     if not os.path.exists(packages_file):
         os.makedirs(os.path.dirname(packages_file), exist_ok=True)
         with open(packages_file, 'w') as f:
-            f.write('litepolis-router-database\n')
-            # f.write('litepolis-router-example\n')
+            f.write('litepolis-router-database-sqlite\n')
+            f.write('litepolis-router-example\n')
             # f.write('litepolis-middleware-example\n')
             # f.write('litepolis-ui-example\n')
             # if package API not backward compatible, rename to new package e.g. litepolis-router-example-v2

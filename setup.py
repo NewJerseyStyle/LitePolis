@@ -15,7 +15,7 @@ setup(
     long_description_content_type="text/markdown",
     author='Yuan XU',
     author_email='dev.source@outlook.com',
-    url='https://github.com/NewJerseyStyle/ollama-tools',
+    url='https://github.com/NewJerseyStyle/LitePolis',
     license=license,
     packages=find_packages(exclude=('tests', 'docs')),
     install_requires=['fastapi', 'ray[serve]', 'GitPython', 'click'],
