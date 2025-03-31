@@ -1,4 +1,6 @@
 import os
+import shutil
+import inspect
 import importlib
 import subprocess
 import configparser
@@ -9,8 +11,7 @@ from fastapi import FastAPI
 import click
 
 from .routers import public
-
-DEFAULT_CONFIG_PATH = '~/.litepolis/config.conf'
+from .utils import DEFAULT_CONFIG_PATH, keep
 
 app = FastAPI()
 
@@ -158,6 +159,7 @@ def init_config(ctx):
 def get_apps(ctx, monolithic=False):
     config = configparser.ConfigParser()
     config.read(DEFAULT_CONFIG_PATH)
+    keep(config)
 
     packages = []
     with open(ctx.obj['packages_file']) as f:
@@ -188,7 +190,7 @@ def get_apps(ctx, monolithic=False):
 
     for line in routers + user_interfaces:
         m = importlib.import_module(line)
-        router = m.init(config)
+        router = m.init()
         try:
             app.include_router(
                 router,
@@ -201,7 +203,7 @@ def get_apps(ctx, monolithic=False):
     for line in middlewares:
         m = importlib.import_module(line)
         try:
-            m.add_middleware(app, config)
+            m.add_middleware(app)
         except Exception as e:
             print(f"Error importing middleware {line}: {e}")
 
@@ -243,35 +245,80 @@ def create():
     """Initialize a new package from GitHub template repo."""
     pass
 
+def validate_project_name(name: str) -> None:
+    """Ensures project name starts with 'litepolis-router-'"""
+    project_type = inspect.stack()[1][3]
+    if not name.startswith(f"litepolis-{project_type}-"):
+        raise ValueError(f"Project name must start with 'litepolis-router-'. Got: {name}")
+        
+def git_reinit(project_path):
+    git_dir = os.path.join(project_path, ".git")
+    if git_dir.exists():
+        shutil.rmtree(git_dir)
+
+    import git
+    new_repo = git.Repo.init(project_path)
+
+    project_name = os.path.basename(project_path)
+    click.secho(f"\nProject {project_name} created!", fg="green", bold=True)
+    click.echo(f"Next steps:\n"
+               f"cd {project_name}\n"
+               f"git remote add origin YOUR_REPO_URL\n"
+               f"git push -u origin main")
+
 @create.command()
-@click.argument('local_path')
-def router(local_path):
+@click.argument('project_name')
+def router(project_name):
     """Initialize a new router package from GitHub templace repo."""
+    try:
+        validate_project_name(project_name)
+    except ValueError as e:
+        click.secho(f"Error: {e}", fg="red")
+        return
+
     import git
 
     # Clone the repository
+    click.secho(f"Cloning template into {project_name}...", fg="cyan")
     repo_url = "https://github.com/NewJerseyStyle/LitePolis-router-template.git"
-    repo = git.Repo.clone_from(repo_url, os.path.abspath(local_path))
+    repo = git.Repo.clone_from(repo_url, project_name)
+
+    git_reinit(project_name)
+
 
 @create.command()
-@click.argument('local_path')
-def middleware(local_path):
+@click.argument('project_name')
+def middleware(project_name):
     """Initialize a new middleware package from GitHub templace repo."""
+    try:
+        validate_project_name(project_name)
+    except ValueError as e:
+        click.secho(f"Error: {e}", fg="red")
+        return
+
     import git
 
     # Clone the repository
     repo_url = "https://github.com/NewJerseyStyle/LitePolis-router-template.git"
-    repo = git.Repo.clone_from(repo_url, os.path.abspath(local_path))
+    repo = git.Repo.clone_from(repo_url, project_name)
+    git_reinit(project_name)
 
 @create.command()
-@click.argument('local_path')
-def ui(local_path):
+@click.argument('project_name')
+def ui(project_name):
     """Initialize a new UI component package from GitHub templace repo."""
+    try:
+        validate_project_name(project_name)
+    except ValueError as e:
+        click.secho(f"Error: {e}", fg="red")
+        return
+
     import git
 
     # Clone the repository
     repo_url = "https://github.com/NewJerseyStyle/LitePolis-router-template.git"
-    repo = git.Repo.clone_from(repo_url, os.path.abspath(local_path))
+    repo = git.Repo.clone_from(repo_url, project_name)
+    git_reinit(project_name)
 
 
 def main():
