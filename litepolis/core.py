@@ -48,7 +48,7 @@ def deploy(ctx, packages_file, cluster):
     if not os.path.exists(packages_file):
         os.makedirs(os.path.dirname(packages_file), exist_ok=True)
         with open(packages_file, 'w') as f:
-            f.write('litepolis-router-database-sqlite\n')
+            f.write('litepolis-database-example\n')
             f.write('litepolis-router-example\n')
             # f.write('litepolis-middleware-example\n')
             # f.write('litepolis-ui-example\n')
@@ -251,7 +251,16 @@ def validate_project_name(name: str) -> None:
     if not name.startswith(f"litepolis-{project_type}-"):
         raise ValueError(f"Project name must start with 'litepolis-router-'. Got: {name}")
         
-def git_reinit(project_path):
+def git_reinit(project_path, repo_url):
+    repo_name = os.path.basename(repo_url)[:-4]
+    project_name = os.path.basename(project_path)
+    if '-' in project_name:
+        project_name = project_name.replace('-', '_')
+    os.rename(
+        os.path.join(project_path, repo_name),
+        os.path.join(project_path, project_name),
+    )
+
     git_dir = os.path.join(project_path, ".git")
     if git_dir.exists():
         shutil.rmtree(git_dir)
@@ -283,7 +292,7 @@ def router(project_name):
     repo_url = "https://github.com/NewJerseyStyle/LitePolis-router-template.git"
     repo = git.Repo.clone_from(repo_url, project_name)
 
-    git_reinit(project_name)
+    git_reinit(project_name, repo_url)
 
 
 @create.command()
@@ -301,7 +310,7 @@ def middleware(project_name):
     # Clone the repository
     repo_url = "https://github.com/NewJerseyStyle/LitePolis-router-template.git"
     repo = git.Repo.clone_from(repo_url, project_name)
-    git_reinit(project_name)
+    git_reinit(project_name, repo_url)
 
 @create.command()
 @click.argument('project_name')
@@ -318,7 +327,7 @@ def ui(project_name):
     # Clone the repository
     repo_url = "https://github.com/NewJerseyStyle/LitePolis-router-template.git"
     repo = git.Repo.clone_from(repo_url, project_name)
-    git_reinit(project_name)
+    git_reinit(project_name, repo_url)
 
 
 def main():
