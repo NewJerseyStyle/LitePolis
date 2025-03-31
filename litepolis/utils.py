@@ -25,8 +25,9 @@ class Utils:
     def set_config(self, sector, key, value):
         self.config.set(sector, key, value)
 
-Utils.options(
-    name=SHARED_CONFIG_KEEPER_NAME,
-    get_if_exists=True,
-    lifetime="detached"
-).remote()
+def register_config_service():
+    Utils.options(
+        name=SHARED_CONFIG_KEEPER_NAME,
+        get_if_exists=True,
+        lifetime="detached"
+    ).remote()

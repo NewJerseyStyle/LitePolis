@@ -11,7 +11,8 @@ from fastapi import FastAPI
 import click
 
 from .routers import public
-from .utils import DEFAULT_CONFIG_PATH, keep
+from .utils import DEFAULT_CONFIG_PATH
+from .utils import keep, register_config_service
 
 app = FastAPI()
 
@@ -173,6 +174,7 @@ def get_apps(ctx, monolithic=False):
                     packages.append(line)
 
     routers = []
+    databases = []
     middlewares = []
     user_interfaces = []
     for line in packages:
@@ -182,10 +184,20 @@ def get_apps(ctx, monolithic=False):
                 routers.append(line)
             elif package[1] == 'middleware':
                 middlewares.append(line)
+            elif package[1] == 'database':
+                databases.append(line)
             elif package[1] == 'ui':
                 user_interfaces.append(line)
 
-    for line in user_interfaces:
+    for line in databases:
+        # m = importlib.import_module(line)
+        # ray.remote(
+        #     m.DatabaseActor
+        # ).options(
+        #     name=line,
+        #     get_if_exists=True,
+        #     lifetime="detached"
+        # ).remote()
         pass
 
     for line in routers + user_interfaces:
@@ -229,6 +241,7 @@ def auto_init_aws():
 @click.pass_context
 def serve_command(ctx):
     ray.init(address=ctx.obj['cluster'])
+    register_config_service()
 
     app = get_apps(ctx)[0]
 
@@ -247,22 +260,37 @@ def create():
 
 def validate_project_name(name: str) -> None:
     """Ensures project name starts with 'litepolis-router-'"""
+    name = name.lower()
+    if '_' in name:
+        name = name.replace('_', '-')
     project_type = inspect.stack()[1][3]
     if not name.startswith(f"litepolis-{project_type}-"):
         raise ValueError(f"Project name must start with 'litepolis-router-'. Got: {name}")
         
 def git_reinit(project_path, repo_url):
     repo_name = os.path.basename(repo_url)[:-4]
+    repo_name = repo_name.lower()
     project_name = os.path.basename(project_path)
+    project_name = project_name.lower()
+    if '-' in repo_name:
+        repo_name = repo_name.replace('-', '_')
     if '-' in project_name:
         project_name = project_name.replace('-', '_')
     os.rename(
         os.path.join(project_path, repo_name),
-        os.path.join(project_path, project_name),
+        os.path.join(project_path, project_name)
     )
 
+    setup_py_path = os.path.join(project_path, "setup.py")
+    if os.path.exists(setup_py_path):
+        with open(setup_py_path, 'r') as f:
+            content = f.read()
+        content = content.replace(repo_name, project_name)
+        with open(setup_py_path, 'w') as f:
+            f.write(content)
+
     git_dir = os.path.join(project_path, ".git")
-    if git_dir.exists():
+    if os.path.exists(git_dir):
         shutil.rmtree(git_dir)
 
     import git
