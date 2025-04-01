@@ -1,6 +1,6 @@
 # LitePolis
 Infrastructure for E-democracy  
-![](https://img.shields.io/badge/status-under_development-red) ![](https://img.shields.io/badge/release-no_release-red)
+![](https://img.shields.io/badge/status-alpha_test-orange) ![](https://img.shields.io/badge/release-developer_facing-yellow) ![PyPI - Version](https://img.shields.io/pypi/v/litepolis)
 
 Polis is a real-time system for gathering, analyzing and understanding
 what large groups of people think in their own words,
@@ -9,6 +9,13 @@ enabled by advanced statistics and machine learning.
 LitePolis is a Python-based, developer-friendly iteration of [Polis](https://github.com/compdemocracy/polis),
 designed to provide a scalable and flexible platform for data scientists and developers.
 Our goal is to make it easy to build and deploy data-driven applications giving more flexibility to the community.
+
+## TL;DR
+* [Build Your First LitePolis API Router in 5 Minutes! 🚀](https://github.com/NewJerseyStyle/LitePolis/wiki/Tutorial:-Creating-New-LitePolis-Packages-with-litepolis%E2%80%90cli)
+* [Example of database package](https://github.com/NewJerseyStyle/LitePolis-database-example)
+* [Example of router package](https://github.com/NewJerseyStyle/LitePolis-router-example)
+
+> ⚠️ The LitePolis is a complex system with this package manager to enable serve in cluster. Current stage is beta testing with developer while building more documents and testing middleware integration.
 
 ## Overview
 
