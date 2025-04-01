@@ -66,15 +66,13 @@ def list_deps(ctx):
         pip_packages = []
         for line in result.stdout.split('\n'):
             line = line.strip()
-            if '-' in line:
-                line = line.replace('-', '_')
+            line = line.replace('-', '_')
             if 'litepolis_' in line.lower():
                 pip_packages.append(line)
         for line in f.readlines():
             line = line.strip()
             if len(line) and not line.startswith('#'):
-                if '-' in line:
-                    line = line.replace('-', '_')
+                line = line.replace('-', '_')
                 package = line.strip()
                 check_import(package)
                 for pip_package in pip_packages:
@@ -91,8 +89,7 @@ def add_deps(ctx, package):
         for line in f.readlines():
             line = line.strip()
             if len(line) and not line.startswith('#'):
-                if '-' in line:
-                    line = line.replace('-', '_')
+                line = line.replace('-', '_')
                 if 'litepolis_' in line.lower():
                     packages.append(line)
     check_import(package)
@@ -110,8 +107,7 @@ def remove_deps(ctx, package):
     for line in lines:
         line = line.strip()
         if len(line) and not line.startswith('#'):
-            if '-' in line:
-                line = line.replace('-', '_')
+            line = line.replace('-', '_')
             if 'litepolis_' in line.lower():
                 packages.append(line)
     if package not in packages:
@@ -133,8 +129,7 @@ def init_config(ctx):
             line = line.strip()
             if len(line) and not line.startswith('#'):
                 check_import(line)
-                if '-' in line:
-                    line = line.replace('-', '_')
+                line = line.replace('-', '_')
                 if '_' in line:
                     package = line.split('_')
                     if package[0] == 'litepolis':
@@ -168,10 +163,8 @@ def get_apps(ctx, monolithic=False):
             line = line.strip()
             if len(line) and not line.startswith('#'):
                 check_import(line)
-                if '-' in line:
-                    line = line.replace('-', '_')
-                if '_' in line:
-                    packages.append(line)
+                line = line.replace('-', '_')
+                packages.append(line)
 
     routers = []
     databases = []
@@ -260,33 +253,38 @@ def create():
 def validate_project_name(name: str) -> None:
     """Ensures project name starts with 'litepolis-router-'"""
     name = name.lower()
-    if '_' in name:
-        name = name.replace('_', '-')
+    name = name.replace('_', '-')
     project_type = inspect.stack()[1][3]
     if not name.startswith(f"litepolis-{project_type}-"):
         raise ValueError(f"Project name must start with 'litepolis-router-'. Got: {name}")
         
 def git_reinit(project_path, repo_url):
-    repo_name = os.path.basename(repo_url)[:-4]
-    repo_name = repo_name.lower()
-    project_name = os.path.basename(project_path)
-    project_name = project_name.lower()
-    if '-' in repo_name:
-        repo_name = repo_name.replace('-', '_')
-    if '-' in project_name:
-        project_name = project_name.replace('-', '_')
-    os.rename(
-        os.path.join(project_path, repo_name),
-        os.path.join(project_path, project_name)
-    )
-
+    content = ''
     setup_py_path = os.path.join(project_path, "setup.py")
     if os.path.exists(setup_py_path):
         with open(setup_py_path, 'r') as f:
             content = f.read()
-        content = content.replace(repo_name, project_name)
+
+    repo_name = os.path.basename(repo_url)[:-4]
+    project_name = os.path.basename(project_path)
+    content = content.replace(repo_name, project_name)
+
+    repo_name = repo_name.lower()
+    project_name = project_name.lower()
+    content = content.replace(repo_name, project_name)
+
+    repo_name = repo_name.replace('-', '_')
+    project_name = project_name.replace('-', '_')
+    content = content.replace(repo_name, project_name)
+
+    if os.path.exists(setup_py_path):
         with open(setup_py_path, 'w') as f:
             f.write(content)
+
+    os.rename(
+        os.path.join(project_path, repo_name),
+        os.path.join(project_path, project_name)
+    )
 
     git_dir = os.path.join(project_path, ".git")
     if os.path.exists(git_dir):
