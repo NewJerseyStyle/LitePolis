@@ -202,10 +202,9 @@ def get_apps(ctx, monolithic=False):
 
     for line in routers + user_interfaces:
         m = importlib.import_module(line)
-        router = m.init()
         try:
             app.include_router(
-                router,
+                m.router,
                 prefix=f'/api/{m.prefix}',
                 dependencies=m.dependencies
             )
@@ -325,6 +324,24 @@ def router(project_name):
 
 @create.command()
 @click.argument('project_name')
+def database(project_name):
+    """Initialize a new database package from GitHub templace repo."""
+    try:
+        validate_project_name(project_name)
+    except ValueError as e:
+        click.secho(f"Error: {e}", fg="red")
+        return
+
+    import git
+
+    # Clone the repository
+    repo_url = "https://github.com/NewJerseyStyle/LitePolis-database-template.git"
+    repo = git.Repo.clone_from(repo_url, project_name)
+    git_reinit(project_name, repo_url)
+
+
+@create.command()
+@click.argument('project_name')
 def middleware(project_name):
     """Initialize a new middleware package from GitHub templace repo."""
     try:
@@ -336,7 +353,7 @@ def middleware(project_name):
     import git
 
     # Clone the repository
-    repo_url = "https://github.com/NewJerseyStyle/LitePolis-router-template.git"
+    repo_url = "https://github.com/NewJerseyStyle/LitePolis-middleware-template.git"
     repo = git.Repo.clone_from(repo_url, project_name)
     git_reinit(project_name, repo_url)
 
