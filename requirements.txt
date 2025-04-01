@@ -1,0 +1,5 @@
+fastapi
+ray[serve]
+pytest
+click
+GitPython
