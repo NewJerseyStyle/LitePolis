@@ -9,7 +9,7 @@ with open('LICENSE') as f:
 
 setup(
     name='litepolis',
-    version="0.0.2",
+    version="1.0.0",
     description='The package manager of a Customizable e-democracy opinion collection and insight mining system.',
     long_description=readme,
     long_description_content_type="text/markdown",
