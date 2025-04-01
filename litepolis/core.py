@@ -1,4 +1,6 @@
 import os
+import shutil
+import inspect
 import importlib
 import subprocess
 import configparser
@@ -9,8 +11,8 @@ from fastapi import FastAPI
 import click
 
 from .routers import public
-
-DEFAULT_CONFIG_PATH = '~/.litepolis/config.conf'
+from .utils import DEFAULT_CONFIG_PATH
+from .utils import keep, register_config_service
 
 app = FastAPI()
 
@@ -47,7 +49,7 @@ def deploy(ctx, packages_file, cluster):
     if not os.path.exists(packages_file):
         os.makedirs(os.path.dirname(packages_file), exist_ok=True)
         with open(packages_file, 'w') as f:
-            f.write('litepolis-router-database-sqlite\n')
+            f.write('litepolis-database-example\n')
             f.write('litepolis-router-example\n')
             # f.write('litepolis-middleware-example\n')
             # f.write('litepolis-ui-example\n')
@@ -158,6 +160,7 @@ def init_config(ctx):
 def get_apps(ctx, monolithic=False):
     config = configparser.ConfigParser()
     config.read(DEFAULT_CONFIG_PATH)
+    keep(config)
 
     packages = []
     with open(ctx.obj['packages_file']) as f:
@@ -171,6 +174,7 @@ def get_apps(ctx, monolithic=False):
                     packages.append(line)
 
     routers = []
+    databases = []
     middlewares = []
     user_interfaces = []
     for line in packages:
@@ -180,18 +184,27 @@ def get_apps(ctx, monolithic=False):
                 routers.append(line)
             elif package[1] == 'middleware':
                 middlewares.append(line)
+            elif package[1] == 'database':
+                databases.append(line)
             elif package[1] == 'ui':
                 user_interfaces.append(line)
 
-    for line in user_interfaces:
+    for line in databases:
+        # m = importlib.import_module(line)
+        # ray.remote(
+        #     m.DatabaseActor
+        # ).options(
+        #     name=line,
+        #     get_if_exists=True,
+        #     lifetime="detached"
+        # ).remote()
         pass
 
     for line in routers + user_interfaces:
         m = importlib.import_module(line)
-        router = m.init(config)
         try:
             app.include_router(
-                router,
+                m.router,
                 prefix=f'/api/{m.prefix}',
                 dependencies=m.dependencies
             )
@@ -201,7 +214,7 @@ def get_apps(ctx, monolithic=False):
     for line in middlewares:
         m = importlib.import_module(line)
         try:
-            m.add_middleware(app, config)
+            m.add_middleware(app)
         except Exception as e:
             print(f"Error importing middleware {line}: {e}")
 
@@ -227,6 +240,7 @@ def auto_init_aws():
 @click.pass_context
 def serve_command(ctx):
     ray.init(address=ctx.obj['cluster'])
+    register_config_service()
 
     app = get_apps(ctx)[0]
 
@@ -243,35 +257,122 @@ def create():
     """Initialize a new package from GitHub template repo."""
     pass
 
+def validate_project_name(name: str) -> None:
+    """Ensures project name starts with 'litepolis-router-'"""
+    name = name.lower()
+    if '_' in name:
+        name = name.replace('_', '-')
+    project_type = inspect.stack()[1][3]
+    if not name.startswith(f"litepolis-{project_type}-"):
+        raise ValueError(f"Project name must start with 'litepolis-router-'. Got: {name}")
+        
+def git_reinit(project_path, repo_url):
+    repo_name = os.path.basename(repo_url)[:-4]
+    repo_name = repo_name.lower()
+    project_name = os.path.basename(project_path)
+    project_name = project_name.lower()
+    if '-' in repo_name:
+        repo_name = repo_name.replace('-', '_')
+    if '-' in project_name:
+        project_name = project_name.replace('-', '_')
+    os.rename(
+        os.path.join(project_path, repo_name),
+        os.path.join(project_path, project_name)
+    )
+
+    setup_py_path = os.path.join(project_path, "setup.py")
+    if os.path.exists(setup_py_path):
+        with open(setup_py_path, 'r') as f:
+            content = f.read()
+        content = content.replace(repo_name, project_name)
+        with open(setup_py_path, 'w') as f:
+            f.write(content)
+
+    git_dir = os.path.join(project_path, ".git")
+    if os.path.exists(git_dir):
+        shutil.rmtree(git_dir)
+
+    import git
+    new_repo = git.Repo.init(project_path)
+
+    project_name = os.path.basename(project_path)
+    click.secho(f"\nProject {project_name} created!", fg="green", bold=True)
+    click.echo(f"Next steps:\n"
+               f"cd {project_name}\n"
+               f"git remote add origin YOUR_REPO_URL\n"
+               f"git push -u origin main")
+
 @create.command()
-@click.argument('local_path')
-def router(local_path):
+@click.argument('project_name')
+def router(project_name):
     """Initialize a new router package from GitHub templace repo."""
+    try:
+        validate_project_name(project_name)
+    except ValueError as e:
+        click.secho(f"Error: {e}", fg="red")
+        return
+
     import git
 
     # Clone the repository
+    click.secho(f"Cloning template into {project_name}...", fg="cyan")
     repo_url = "https://github.com/NewJerseyStyle/LitePolis-router-template.git"
-    repo = git.Repo.clone_from(repo_url, os.path.abspath(local_path))
+    repo = git.Repo.clone_from(repo_url, project_name)
+
+    git_reinit(project_name, repo_url)
+
 
 @create.command()
-@click.argument('local_path')
-def middleware(local_path):
+@click.argument('project_name')
+def database(project_name):
+    """Initialize a new database package from GitHub templace repo."""
+    try:
+        validate_project_name(project_name)
+    except ValueError as e:
+        click.secho(f"Error: {e}", fg="red")
+        return
+
+    import git
+
+    # Clone the repository
+    repo_url = "https://github.com/NewJerseyStyle/LitePolis-database-template.git"
+    repo = git.Repo.clone_from(repo_url, project_name)
+    git_reinit(project_name, repo_url)
+
+
+@create.command()
+@click.argument('project_name')
+def middleware(project_name):
     """Initialize a new middleware package from GitHub templace repo."""
+    try:
+        validate_project_name(project_name)
+    except ValueError as e:
+        click.secho(f"Error: {e}", fg="red")
+        return
+
     import git
 
     # Clone the repository
-    repo_url = "https://github.com/NewJerseyStyle/LitePolis-router-template.git"
-    repo = git.Repo.clone_from(repo_url, os.path.abspath(local_path))
+    repo_url = "https://github.com/NewJerseyStyle/LitePolis-middleware-template.git"
+    repo = git.Repo.clone_from(repo_url, project_name)
+    git_reinit(project_name, repo_url)
 
 @create.command()
-@click.argument('local_path')
-def ui(local_path):
+@click.argument('project_name')
+def ui(project_name):
     """Initialize a new UI component package from GitHub templace repo."""
+    try:
+        validate_project_name(project_name)
+    except ValueError as e:
+        click.secho(f"Error: {e}", fg="red")
+        return
+
     import git
 
     # Clone the repository
     repo_url = "https://github.com/NewJerseyStyle/LitePolis-router-template.git"
-    repo = git.Repo.clone_from(repo_url, os.path.abspath(local_path))
+    repo = git.Repo.clone_from(repo_url, project_name)
+    git_reinit(project_name, repo_url)
 
 
 def main():
