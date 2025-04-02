@@ -90,10 +90,10 @@ def add_deps(ctx, package):
             line = line.strip()
             if len(line) and not line.startswith('#'):
                 line = line.replace('-', '_')
-                if 'litepolis_' in line.lower():
+                if line.lower().startswith('litepolis_'):
                     packages.append(line)
     check_import(package)
-    if package not in packages:
+    if package.replace('-', '_').lower() not in packages:
         with open(ctx.obj['packages_file'], 'a') as f:
             f.write(f"{package}\n")
 
@@ -108,9 +108,9 @@ def remove_deps(ctx, package):
         line = line.strip()
         if len(line) and not line.startswith('#'):
             line = line.replace('-', '_')
-            if 'litepolis_' in line.lower():
+            if line.lower().startswith('litepolis_'):
                 packages.append(line)
-    if package not in packages:
+    if package.replace('-', '_').lower() not in packages:
         raise ValueError(f"Package '{package}' not found in dependencies file.")
     else:
         packages.remove(package)
