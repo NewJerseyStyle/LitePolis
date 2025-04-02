@@ -193,7 +193,14 @@ def get_apps(ctx, monolithic=False):
         # ).remote()
         pass
 
-    for line in routers + user_interfaces:
+    for line in user_interfaces:
+        m = importlib.import_module(line)
+        try:
+            app.include_router(m.prefix, m.files, name=m.name)
+        except Exception as e:
+            print(f"Error importing router {line}: {e}")
+
+    for line in routers:
         m = importlib.import_module(line)
         try:
             app.include_router(
@@ -210,11 +217,6 @@ def get_apps(ctx, monolithic=False):
             m.add_middleware(app)
         except Exception as e:
             print(f"Error importing middleware {line}: {e}")
-
-    app.include_router(
-        public.router,
-        prefix="/api"
-    )
 
     return [app]
 
@@ -368,7 +370,7 @@ def ui(project_name):
     import git
 
     # Clone the repository
-    repo_url = "https://github.com/NewJerseyStyle/LitePolis-router-template.git"
+    repo_url = "https://github.com/NewJerseyStyle/LitePolis-ui-template.git"
     repo = git.Repo.clone_from(repo_url, project_name)
     git_reinit(project_name, repo_url)
 
