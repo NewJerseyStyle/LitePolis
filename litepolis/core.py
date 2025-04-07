@@ -69,7 +69,7 @@ def list_deps(ctx):
         return
 
     try:
-        result = subprocess.run(['pip', 'list', '--format=freeze'],
+        result = subprocess.run(['uv', 'pip', 'list', '--format=freeze'],
                                 capture_output=True, text=True, check=True)
         installed_packages = {}
         for line in result.stdout.splitlines():
@@ -160,15 +160,13 @@ def add_deps(ctx, package_spec):
     print(f"Installing {install_spec}...")
     try:
         # Use the exact package_spec provided by the user for pip install
-        subprocess.run(['pip', 'install', install_spec], check=True, capture_output=True, text=True)
+        subprocess.run(['uv', 'pip', 'install', install_spec], check=True, capture_output=True, text=True)
         print(f"Successfully installed {install_spec}.")
     except subprocess.CalledProcessError as e:
         print(f"Error installing {install_spec}:")
         print(e.stderr)
         # Consider if we should revert the change in packages.txt here
         print(f"Installation failed. Please check the package name and version.")
-    except FileNotFoundError:
-         print(f"Error: 'pip' command not found. Make sure pip is installed and in your PATH.")
 
 @deploy.command()
 @click.argument('package_name') # Changed argument name
@@ -239,16 +237,12 @@ def sync_deps(ctx):
         print(f"Ensuring {package_spec} is installed...")
         try:
             # Use the exact package_spec from the file for pip install
-            subprocess.run(['pip', 'install', package_spec], check=True, capture_output=True, text=True)
+            subprocess.run(['uv', 'pip', 'install', package_spec], check=True, capture_output=True, text=True)
             # print(f"Successfully installed/verified {package_spec}.") # Optional: reduce verbosity
         except subprocess.CalledProcessError as e:
             print(f"Error installing {package_spec}:")
             print(e.stderr)
             all_successful = False
-        except FileNotFoundError:
-             print(f"Error: 'pip' command not found. Make sure pip is installed and in your PATH.")
-             all_successful = False
-             break # Abort if pip is not found
 
     if all_successful:
         print("Environment synced successfully.")
