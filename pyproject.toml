@@ -1,0 +1,52 @@
+[build-system]
+requires = [
+    "setuptools>=61.2",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "litepolis"
+version = "1.0.3"
+authors = [
+    { name = "Yuan XU", email = "dev.source@outlook.com" },
+]
+description = "The package manager of a Customizable e-democracy opinion collection and insight mining system."
+dependencies = [
+    "fastapi",
+    "ray[serve]",
+    "GitPython",
+    "click",
+]
+
+[project.license]
+text = "file: LICENSE"
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[project.urls]
+Homepage = "https://github.com/NewJerseyStyle/LitePolis"
+
+[project.optional-dependencies]
+demo = [
+    "litepolis-router-database",
+    "litepolis-router-example",
+    "litepolis-middleware-example",
+    "litepolis-ui-example",
+]
+
+[project.scripts]
+litepolis-cli = "litepolis.core:main"
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+exclude = [
+    "tests",
+]
+namespaces = false
+
+[tool.uv.workspace]
+members = ["example"]
