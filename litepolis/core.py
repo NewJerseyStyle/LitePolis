@@ -446,22 +446,33 @@ def git_reinit(project_path, repo_url):
     if os.path.exists(setup_py_path):
         with open(setup_py_path, 'r') as f:
             content = f.read()
+    pyproject = ''
+    pyproject_path = os.path.join(project_path, "pyproject.toml")
+    if os.path.exists(pyproject_path):
+        with open(pyproject_path, 'r') as f:
+            pyproject = f.read()
 
     repo_name = os.path.basename(repo_url)[:-4]
     project_name = os.path.basename(project_path)
     content = content.replace(repo_name, project_name)
+    pyproject = pyproject.replace(repo_name, project_name)
 
     repo_name = repo_name.lower()
     project_name = project_name.lower()
     content = content.replace(repo_name, project_name)
+    pyproject = pyproject.replace(repo_name, project_name)
 
     repo_name = repo_name.replace('-', '_')
     project_name = project_name.replace('-', '_')
     content = content.replace(repo_name, project_name)
+    pyproject = pyproject.replace(repo_name, project_name)
 
     if os.path.exists(setup_py_path):
         with open(setup_py_path, 'w') as f:
             f.write(content)
+    if os.path.exists(pyproject_path):
+        with open(pyproject_path, 'w') as f:
+            f.write(pyproject)
 
     os.rename(
         os.path.join(project_path, repo_name),
