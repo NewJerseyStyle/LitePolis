@@ -10,94 +10,44 @@ Built with a modular, microservice-like architecture, LitePolis is **distributed
 
 The core of LitePolis is a central package manager that discovers and orchestrates various components – API Routers, Middleware, and UI Packages. This modularity allows developers and data scientists to easily build, deploy, and iterate on sophisticated data-driven e-democracy tools and other opinion-gathering applications.
 
-## Getting Started: Develop to Deploy LitePolis App in 7 Steps\!
+[![Video about LitePolis](image_with_play_button(1).png)](https://www.canva.com/design/DAGkKYnWMIE/acGGYFVWpYpFA-t65YcyWw/watch?embed)
 
-This tutorial guides you through building and deploying a minimal LitePolis application, consisting of a simple API backend (a Router package).
-
-**Prerequisites:**
-
-  * Python (3.8+ recommended) and pip installed.
-  * Git installed.
-  * Access to a running Ray Cluster. For local development, you can start one easily:
-    ```bash
-    pip install ray[serve] # Install Ray with the Serve component
-    ray start --head --dashboard-host 0.0.0.0 # Start a local single-node cluster
-    # Access the Ray Dashboard at http://127.0.0.1:8265
-    ```
-    *(Refer to [Ray Cluster Setup Docs](https://docs.ray.io/en/latest/cluster/getting-started.html) for more advanced setups like multi-node or Kubernetes)*
-
+## Quick start
 ### 1. Install the LitePolis CLI
 
 The `litepolis-cli` is your main tool for creating, managing, and deploying LitePolis packages.
+  * Needs Python (3.12 recommended) and pip installed.
 
 ```bash
 pip install litepolis
-# Verify installation
-litepolis --version
 ```
 
-### 2. Create Your First API Router Package
+### 2. Explore Packages for Deployment
 
-API Routers handle backend logic and data requests. Let's create a simple "hello world" router.
+![Awesome-LitePolis scans GitHub everyday for available LitePolis packges (including work in progress repositories)](https://newjerseystyle.github.io/Awesome-LitePolis/)
+
+### 3. Deploy
+Add features you want in LitePolis
 
 ```bash
-# Use the CLI to bootstrap a new router package
-litepolis create router litepolis-router-simple-api
+litepolis-cli deploy list-deps
 
-# Navigate into the new directory
-cd litepolis-router-simple-api
-```
+# remove packages if you don't need default packages that provides Polis functionality
+litepolis-cli deploy remove-deps litepolis-router-default
 
-This command creates a standard Python package structure. Look inside `litepolis_router_simple_api/main.py` (or similar). It will contain boilerplate code using FastAPI. Let's make sure it has a basic endpoint:
-
-```python
-# litepolis_router_simple_api/main.py (ensure/modify it looks like this)
-from fastapi import APIRouter
-
-router = APIRouter()
-
-@router.get("/hello")
-async def read_root():
-    return {"message": "Hello from my-simple-api!"}
-
-# LitePolis package manager will discover this 'router' object
-```
-
-  * **(Optional) Explore:** Check out the [Example Router Package](https://github.com/NewJerseyStyle/LitePolis-router-example) for more complex examples, including database interactions ([Example DB Package](https://github.com/NewJerseyStyle/LitePolis-database-example)).
-
-### 3. Prepare Your Packages for Deployment
-
-For the LitePolis CLI to find your local packages during deployment, you often need to install them in "editable" mode.
-
-```bash
-# In the litepolis-router-simple-api directory:
-pip install -e .
-```
-
-This makes your local package code importable by the LitePolis deployment process.
-
-### 4. Deploy to Ray\!
-
-Make sure your local Ray cluster is running (see Prerequisites). Now, use the LitePolis CLI to deploy your application based on the configuration file.
-
-```bash
+# add packages that you need
 litepolis-cli deploy add-deps litepolis-router-simple-api
+
+litepolis-cli deploy init-config
+
+# setup password etc.
+nano ~/.litepolis/config.conf
+
+# start serving
 litepolis-cli deploy serve
 ```
 
 ## Next Steps:
 
-  * Explore the [Example UI](https://github.com/NewJerseyStyle/LitePolis-ui-example) and [Example Router](https://github.com/NewJerseyStyle/LitePolis-router-example) repositories in more detail.
-  * Try adding a **Middleware** package (`litepolis create middleware ...`) for things like logging or authentication.
-  * Learn more about configuring **auto-scaling**, replicas, and other deployment options in your `deploy.yaml` or via CLI arguments (refer to LitePolis documentation).
-  * Integrate a database using a dedicated router package (see the [Database Example](https://github.com/NewJerseyStyle/LitePolis-database-example)).
-
-## Deployment & Maintenance Strengths
-
-While the tutorial covers the *how*, remember the key *why*s for using LitePolis, especially for administrators:
-
-  * **Default Auto-Scaling:** Ray Serve automatically scales API replicas based on traffic.
-  * **Modular Feature Addition:** Add functionality by adding package dependencies and redeploying.
-  * **Simplified Orchestration:** The `litepolis` tool manages component discovery and dependency resolution.
-  * **Resilience:** Ray provides fault tolerance for running components.
-  * **Cloud Native:** Runs effectively on Kubernetes and cloud platforms.
+* Use StarRocks as database [WIP#todo]
+* Deploy to Google cloud with autoscale [WIP#todo]
