@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "litepolis"
-version = "1.0.4"
+version = "1.0.5"
 authors = [
     { name = "Yuan XU", email = "dev.source@outlook.com" },
 ]
@@ -16,6 +16,7 @@ dependencies = [
     "ray[serve]",
     "GitPython",
     "click",
+    "uv",
 ]
 
 [project.license]
