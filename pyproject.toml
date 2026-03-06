@@ -31,10 +31,16 @@ Homepage = "https://github.com/NewJerseyStyle/LitePolis"
 
 [project.optional-dependencies]
 demo = [
-    "litepolis-router-database",
+    "litepolis-database-example",
     "litepolis-router-example",
     "litepolis-middleware-example",
     "litepolis-ui-example",
+]
+default = [
+    "litepolis-database-default",
+    "litepolis-router-default",
+    "litepolis-middleware-default",
+    "litepolis-ui-default",
 ]
 
 [project.scripts]
@@ -51,3 +57,4 @@ namespaces = false
 
 [tool.uv.workspace]
 members = ["example"]
+
