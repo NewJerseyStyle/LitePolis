@@ -12,118 +12,49 @@ The core of LitePolis is a central package manager that discovers and orchestrat
 
 [![Video about LitePolis](image_with_play_button(1).png)](https://www.canva.com/design/DAGkKYnWMIE/acGGYFVWpYpFA-t65YcyWw/watch?embed)
 
-## Who Is This For?
+## Quick start
+### 1. Install the LitePolis CLI
 
-- **Deployers** — you want to run a Polis-like system with minimal setup
-- **Developers** — you want to build custom routers, middleware, or database adapters as LitePolis packages
-
----
-
-## Quick Start (Deployers)
-
-### 1. Install
-
-Requires Python 3.12+ and pip.
+The `litepolis-cli` is your main tool for creating, managing, and deploying LitePolis packages.
+  * Needs Python (3.12 recommended) and pip installed.
 
 ```bash
 pip install litepolis
 ```
 
-### 2. Set up your package list
+### 2. Explore Packages for Deployment
 
-LitePolis uses a `packages.txt` file (like `requirements.txt`) to declare which packages your deployment needs. The default location is `~/.litepolis/packages.txt`.
+![Awesome-LitePolis scans GitHub everyday for available LitePolis packges (including work in progress repositories)](https://newjerseystyle.github.io/Awesome-LitePolis/)
 
-A minimal Polis-compatible deployment looks like:
-
-```
-litepolis-database-default==0.1.0
-litepolis-router-default==0.1.0
-```
-
-To add or remove packages from this list via CLI:
+### 3. Deploy
+Add features you want in LitePolis
 
 ```bash
-# Add a package (automatically records the installed version)
-litepolis-cli deploy add-deps litepolis-router-default
+litepolis-cli deploy list-deps
 
-# Add a specific version
-litepolis-cli deploy add-deps litepolis-router-default==1.0.0
-
-# Remove a package
+# remove packages if you don't need default packages that provides Polis functionality
 litepolis-cli deploy remove-deps litepolis-router-default
 
-# See what's declared vs what's installed
-litepolis-cli deploy list-deps
-```
+# add packages that you need
+litepolis-cli deploy add-deps litepolis-router-example
 
-You can also edit `~/.litepolis/packages.txt` directly — it's plain text, one `package==version` per line, with `#` comments supported.
-
-### 3. Install all declared packages
-
-```bash
-litepolis-cli deploy sync-deps
-```
-
-This reads your `packages.txt` and installs everything to the pinned versions. Run this after editing the file manually or when setting up on a new machine.
-
-### 4. Generate config
-
-```bash
+# setup default config for packages in `~/.litepolis/config.conf`
 litepolis-cli deploy init-config
-```
 
-This reads your installed packages, collects their default config values, and writes them to `~/.litepolis/config.conf`. Then edit the file to set secrets, database paths, etc.:
-
-```bash
+# setup password etc.
 nano ~/.litepolis/config.conf
-```
 
-### 5. Serve
-
-```bash
-# Start serving (connects to an existing Ray cluster or starts one)
+# start serving
 litepolis-cli deploy serve
-
-# Or: start a local Ray head node and serve in one step
+# Or: start a local head node and serve in one go
 litepolis-cli deploy local
-```
 
-The API will be available at `http://localhost:8000/api/v3/` by default.
-
-### Custom packages file location
-
-If you manage multiple deployments or want to keep your packages file elsewhere:
-
-```bash
-litepolis-cli deploy --packages-file ./my-deployment.txt serve
-```
-
-### Connecting to a Ray cluster
-
-```bash
+# Or deploy to remote cluster
 litepolis-cli deploy --cluster ray://<head-node-ip>:10001 serve
 ```
 
----
-
-## Browsing Available Packages
-
-The [Awesome LitePolis](https://newjerseystyle.github.io/Awesome-LitePolis/) directory is scanned daily from GitHub and lists available routers, databases, middleware, and UI packages (including works in progress).
-
----
-
-## Quick Start (Package Developers)
-
-LitePolis packages follow a strict naming convention:
-
-| Type | Name pattern | Example |
-|---|---|---|
-| Router | `litepolis-router-*` | `litepolis-router-default` |
-| Database | `litepolis-database-*` | `litepolis-database-default` |
-| Middleware | `litepolis-middleware-*` | `litepolis-middleware-auth` |
-| UI | `litepolis-ui-*` | `litepolis-ui-admin` |
-
-### Scaffold a new package
+## For Developers
+To build new package for the LitePolis ecosystem
 
 ```bash
 # Create a new router package
@@ -189,17 +120,7 @@ Commands:
   ui            Scaffold a new UI package
 ```
 
----
+## Next Steps:
 
-## Future developments
-
-- StarRocks database backend
-- Google Cloud deployment with autoscale
-
----
-
-## Related
-
-- [litepolis-router-default](https://github.com/NewJerseyStyle/LitePolis-router-default) — default Polis-compatible API router
-- [litepolis-database-default](https://github.com/NewJerseyStyle/LitePolis-database-default) — default Polis-compatible database layer
-- [Awesome LitePolis](https://newjerseystyle.github.io/Awesome-LitePolis/) — package directory
+* Use StarRocks as database [WIP#todo]
+* Deploy to Google cloud with autoscale [WIP#todo]

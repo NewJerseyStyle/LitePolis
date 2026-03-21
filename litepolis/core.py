@@ -371,6 +371,9 @@ def get_apps(ctx, monolithic=False):
         # ).remote()
         pass
 
+    # Track UI modules for root redirect logic
+    ui_prefixes = {}  # import_name -> prefix
+    
     for import_name in user_interfaces:
         m = importlib.import_module(import_name)
         try:
@@ -379,15 +382,43 @@ def get_apps(ctx, monolithic=False):
                 prefix=f'/{m.prefix}',
                 dependencies=getattr(m, 'dependencies', [])
             )
+            ui_prefixes[import_name] = m.prefix
         except Exception as e:
             print(f"Error importing UI {import_name}: {e}")
+
+    # Handle root redirect for UI modules
+    if ui_prefixes:
+        redirect_target = None
+        
+        if len(ui_prefixes) == 1:
+            # Auto-redirect if only one UI module
+            redirect_target = list(ui_prefixes.values())[0]
+        else:
+            # Multiple UI modules - check config for explicit setting
+            try:
+                from litepolis import get_config
+                redirect_target = get_config("litepolis", "root_redirect")
+            except:
+                pass
+        
+        if redirect_target:
+            redirect_path = f'/{redirect_target}' if not redirect_target.startswith('/') else redirect_target
+            
+            @app.get("/", include_in_schema=False)
+            async def root_redirect():
+                from fastapi.responses import RedirectResponse
+                return RedirectResponse(url=redirect_path, status_code=302)
+            
+            print(f"Root '/' redirects to: {redirect_path}")
 
     for import_name in routers:
         m = importlib.import_module(import_name)
         try:
+            # Handle empty prefix (routes at /api/* instead of /api/prefix/*)
+            router_prefix = f'/api/{m.prefix}' if m.prefix else '/api'
             app.include_router(
                 m.router,
-                prefix=f'/api/{m.prefix}',
+                prefix=router_prefix,
                 dependencies=m.dependencies
             )
         except Exception as e:
