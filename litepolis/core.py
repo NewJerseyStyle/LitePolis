@@ -4,6 +4,7 @@ import inspect
 import importlib
 import subprocess
 import configparser
+from pathlib import Path
 
 import ray
 from ray import serve
@@ -37,15 +38,7 @@ def deploy(ctx, packages_file, cluster):
     ctx.obj['cluster'] = cluster
     if not os.path.exists(packages_file):
         os.makedirs(os.path.dirname(packages_file), exist_ok=True)
-        with open(packages_file, 'w') as f:
-            # f.write('litepolis-router-example\n')
-            # f.write('litepolis-middleware-example\n')
-            # f.write('litepolis-ui-example\n')
-            # if package API not backward compatible, rename to new package e.g. litepolis-router-example-v2
-            # Example with version:
-            f.write('litepolis-database-example==0.0.1\n')
-            # f.write('litepolis-router-example==0.2.1\n')
-            pass
+        Path(packages_file).touch()
 
 @deploy.command()
 @click.pass_context
@@ -159,8 +152,8 @@ def add_deps(ctx, package_spec):
     install_spec = package_spec if new_version else new_name # Use package_spec if version is given, else just name
     print(f"Installing {install_spec}...")
     try:
-        # Use the exact package_spec provided by the user for pip install
-        subprocess.run(['uv', 'pip', 'install', install_spec], check=True, capture_output=True, text=True)
+        # Use pip directly instead of uv pip
+        subprocess.run(['pip', 'install', '--no-cache-dir', install_spec], check=True, capture_output=True, text=True)
         print(f"Successfully installed {install_spec}.")
     except subprocess.CalledProcessError as e:
         print(f"Error installing {install_spec}:")
@@ -236,8 +229,8 @@ def sync_deps(ctx):
     for package_spec in packages_to_install:
         print(f"Ensuring {package_spec} is installed...")
         try:
-            # Use the exact package_spec from the file for pip install
-            subprocess.run(['uv', 'pip', 'install', package_spec], check=True, capture_output=True, text=True)
+            # Use pip directly instead of uv pip
+            subprocess.run(['pip', 'install', '--no-cache-dir', package_spec], check=True, capture_output=True, text=True)
             # print(f"Successfully installed/verified {package_spec}.") # Optional: reduce verbosity
         except subprocess.CalledProcessError as e:
             print(f"Error installing {package_spec}:")
@@ -267,30 +260,45 @@ def init_config(ctx):
                     # Normalize name for importlib (replace - with _)
                     import_name = package_name.replace('-', '_')
                     if import_name.startswith('litepolis_'):
-                         # Attempt import to check availability (optional, sync_deps should handle installation)
-                        try:
-                            importlib.import_module(import_name)
+                        # Check if module exists without importing (avoids calling get_config at import time)
+                        spec = importlib.util.find_spec(import_name)
+                        if spec is not None:
                             package_names.append(import_name)
-                        except ImportError:
-                             print(f"Warning: Package {import_name} (from {line}) not installed. Run 'deploy sync-deps'. Skipping config generation for this package.")
+                        else:
+                            print(f"Warning: Package {import_name} (from {line}) not installed. Run 'deploy sync-deps'. Skipping config generation for this package.")
 
     except FileNotFoundError:
         print(f"Warning: Packages file '{packages_file}' not found during config init.")
 
     for import_name in package_names:
-        m = importlib.import_module(import_name)
-        config.add_section(line)
-        for k, v in m.DEFAULT_CONFIG.items():
-            config.set(line, k, v)
+        try:
+            m = importlib.import_module(import_name)
+            if hasattr(m, 'DEFAULT_CONFIG'):
+                config.add_section(import_name)
+                for k, v in m.DEFAULT_CONFIG.items():
+                    # Convert all values to strings for configparser
+                    config.set(import_name, k, str(v))
+            else:
+                print(f"Warning: Package {import_name} has no DEFAULT_CONFIG. Skipping.")
+        except Exception as e:
+            print(f"Warning: Failed to get config from {import_name}: {e}. Skipping.")
 
     write_flag = True
     prompt = f"Config file '{DEFAULT_CONFIG_PATH}' already exists. Overwrite?"
     if os.path.exists(DEFAULT_CONFIG_PATH):
-        if not click.confirm(prompt):
-            write_flag = False
+        # Auto-confirm in non-interactive mode
+        if sys.stdin.isatty():
+            if not click.confirm(prompt):
+                write_flag = False
+        else:
+            print(f"Config file exists. Overwriting (non-interactive mode).")
     if write_flag:
-        with open(DEFAULT_CONFIG_PATH, 'w') as f:
+        # Ensure directory exists
+        config_path = os.path.expanduser(DEFAULT_CONFIG_PATH)
+        os.makedirs(os.path.dirname(config_path), exist_ok=True)
+        with open(config_path, 'w') as f:
             config.write(f)
+        print(f"Created config file at {config_path}")
 
     print(f"Now edit file '{DEFAULT_CONFIG_PATH}' to configure the server.")
 
@@ -366,7 +374,11 @@ def get_apps(ctx, monolithic=False):
     for import_name in user_interfaces:
         m = importlib.import_module(import_name)
         try:
-            app.include_router(m.prefix, m.files, name=m.name)
+            app.include_router(
+                m.router,
+                prefix=f'/{m.prefix}',
+                dependencies=getattr(m, 'dependencies', [])
+            )
         except Exception as e:
             print(f"Error importing UI {import_name}: {e}")
 
@@ -419,6 +431,150 @@ def serve_command(ctx):
         pass
 
     serve.run(FastAPIWrapper.bind(), route_prefix="/")
+
+
+@deploy.command("validate")
+@click.pass_context
+def validate_command(ctx):
+    """Validate configuration and packages without starting server (dry-run)."""
+    packages_file = ctx.obj['packages_file']
+    
+    print("=" * 60)
+    print("LitePolis Configuration Validation")
+    print("=" * 60)
+    
+    # Check packages file
+    print(f"\n[1] Checking packages file: {packages_file}")
+    if not os.path.exists(packages_file):
+        print(f"    ERROR: Packages file not found!")
+        print(f"    Run: litepolis deploy add-deps <package-name>")
+        return False
+    
+    # Read and validate packages
+    package_specs = []
+    with open(packages_file) as f:
+        for line in f:
+            line = line.strip()
+            if len(line) and not line.startswith('#') and '==' in line:
+                package_specs.append(line)
+    
+    if not package_specs:
+        print(f"    WARNING: No packages defined in {packages_file}")
+        return False
+    
+    print(f"    Found {len(package_specs)} package(s):")
+    for spec in package_specs:
+        print(f"      - {spec}")
+    
+    # Check each package is installed
+    print("\n[2] Checking installed packages...")
+    all_installed = True
+    for spec in package_specs:
+        package_name = spec.split('==', 1)[0]
+        import_name = package_name.replace('-', '_')
+        try:
+            m = importlib.import_module(import_name)
+            
+            # Check required exports
+            missing_exports = []
+            if not hasattr(m, 'DEFAULT_CONFIG'):
+                missing_exports.append('DEFAULT_CONFIG')
+            
+            # Determine package type
+            if import_name.startswith('litepolis_'):
+                parts = import_name.split('_', 2)
+                if len(parts) >= 2:
+                    pkg_type = parts[1]
+                    if pkg_type == 'router':
+                        if not hasattr(m, 'router'):
+                            missing_exports.append('router')
+                        if not hasattr(m, 'prefix'):
+                            missing_exports.append('prefix')
+                        if not hasattr(m, 'dependencies'):
+                            missing_exports.append('dependencies')
+                    elif pkg_type == 'ui':
+                        if not hasattr(m, 'router'):
+                            missing_exports.append('router')
+                        if not hasattr(m, 'prefix'):
+                            missing_exports.append('prefix')
+            
+            if missing_exports:
+                print(f"    WARNING: {import_name} missing exports: {missing_exports}")
+            else:
+                print(f"    OK: {import_name}")
+                
+        except ImportError as e:
+            print(f"    ERROR: {import_name} not installed - {e}")
+            all_installed = False
+    
+    if not all_installed:
+        print("\n    Run: litepolis deploy sync-deps")
+        return False
+    
+    # Check config file
+    print(f"\n[3] Checking config file: {DEFAULT_CONFIG_PATH}")
+    config = configparser.ConfigParser()
+    config_read = config.read(DEFAULT_CONFIG_PATH)
+    
+    if not config_read:
+        print(f"    WARNING: Config file not found")
+        print(f"    Run: litepolis deploy init-config")
+    else:
+        print(f"    Found sections:")
+        for section in config.sections():
+            print(f"      [{section}]")
+            for key, value in config.items(section):
+                # Hide secrets
+                if 'secret' in key.lower() or 'password' in key.lower() or 'token' in key.lower():
+                    display_value = '***'
+                else:
+                    display_value = value
+                print(f"        {key} = {display_value}")
+    
+    # Try to load app (dry-run)
+    print("\n[4] Testing app assembly...")
+    try:
+        # Don't use Ray for validation
+        test_app = FastAPI()
+        
+        for spec in package_specs:
+            package_name = spec.split('==', 1)[0]
+            import_name = package_name.replace('-', '_')
+            
+            if import_name.startswith('litepolis_'):
+                parts = import_name.split('_', 2)
+                if len(parts) >= 2:
+                    pkg_type = parts[1]
+                    m = importlib.import_module(import_name)
+                    
+                    if pkg_type == 'router':
+                        test_app.include_router(
+                            m.router,
+                            prefix=f'/api/{m.prefix}',
+                            dependencies=getattr(m, 'dependencies', [])
+                        )
+                        print(f"    OK: Mounted router {import_name} at /api/{m.prefix}")
+                    elif pkg_type == 'ui':
+                        test_app.include_router(
+                            m.router,
+                            prefix=getattr(m, 'prefix', f'/{import_name}'),
+                            dependencies=getattr(m, 'dependencies', [])
+                        )
+                        print(f"    OK: Mounted UI {import_name} at {getattr(m, 'prefix', f'/{import_name}')}")
+        
+        print("\n" + "=" * 60)
+        print("VALIDATION PASSED - Configuration is ready!")
+        print("=" * 60)
+        print("\nTo start the server:")
+        print("  litepolis deploy local    # For local development")
+        print("  litepolis deploy serve    # For Ray cluster")
+        return True
+        
+    except Exception as e:
+        print(f"\n    ERROR: Failed to assemble app - {e}")
+        import traceback
+        traceback.print_exc()
+        return False
 
 
 @cli.group()

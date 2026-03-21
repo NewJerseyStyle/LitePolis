@@ -1,7 +1,8 @@
 import configparser
+import os
 import ray
 
-DEFAULT_CONFIG_PATH = '~/.litepolis/config.conf'
+DEFAULT_CONFIG_PATH = os.path.expanduser('~/.litepolis/config.conf')
 SHARED_CONFIG_KEEPER_NAME = '_LITEPOLIS_CONFIG_GLOBAL'
 
 def get_config(sector: str, key: str = None) -> str:
@@ -19,7 +20,7 @@ class Utils:
 
     def get_config(self, sector, key=None):
         if key is None:
-            return dict(self.config.items('Section'))
+            return dict(self.config.items(sector))
         return self.config.get(sector, key)
 
     def set_config(self, sector, key, value):
