@@ -42,6 +42,12 @@ default = [
     "litepolis-middleware-default",
     "litepolis-ui-default",
 ]
+particiapp = [
+    "litepolis-database-default",
+    "litepolis-database-particiapi",
+    "litepolis-router-particiapi",
+    "litepolis-ui-particiapp",
+]
 
 [project.scripts]
 litepolis-cli = "litepolis.core:main"
