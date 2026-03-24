@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "litepolis"
-version = "1.0.5"
+version = "1.0.7"
 authors = [
     { name = "Yuan XU", email = "dev.source@outlook.com" },
 ]
@@ -31,10 +31,22 @@ Homepage = "https://github.com/NewJerseyStyle/LitePolis"
 
 [project.optional-dependencies]
 demo = [
-    "litepolis-router-database",
+    "litepolis-database-example",
     "litepolis-router-example",
     "litepolis-middleware-example",
     "litepolis-ui-example",
+]
+default = [
+    "litepolis-database-default",
+    "litepolis-router-default",
+    "litepolis-middleware-default",
+    "litepolis-ui-default",
+]
+particiapp = [
+    "litepolis-database-default",
+    "litepolis-database-particiapi",
+    "litepolis-router-particiapi",
+    "litepolis-ui-particiapp",
 ]
 
 [project.scripts]
