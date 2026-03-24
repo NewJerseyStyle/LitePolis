@@ -153,8 +153,7 @@ def add_deps(ctx, package_spec):
     install_spec = package_spec if new_version else new_name # Use package_spec if version is given, else just name
     print(f"Installing {install_spec}...")
     try:
-        # Use pip directly instead of uv pip
-        subprocess.run(['pip', 'install', '--no-cache-dir', install_spec], check=True, capture_output=True, text=True)
+        subprocess.run(['uv', 'pip', 'install', '--no-cache-dir', install_spec], check=True, capture_output=True, text=True)
         print(f"Successfully installed {install_spec}.")
     except subprocess.CalledProcessError as e:
         print(f"Error installing {install_spec}:")
@@ -230,8 +229,7 @@ def sync_deps(ctx):
     for package_spec in packages_to_install:
         print(f"Ensuring {package_spec} is installed...")
         try:
-            # Use pip directly instead of uv pip
-            subprocess.run(['pip', 'install', '--no-cache-dir', package_spec], check=True, capture_output=True, text=True)
+            subprocess.run(['uv', 'pip', 'install', '--no-cache-dir', package_spec], check=True, capture_output=True, text=True)
             # print(f"Successfully installed/verified {package_spec}.") # Optional: reduce verbosity
         except subprocess.CalledProcessError as e:
             print(f"Error installing {package_spec}:")
