@@ -106,21 +106,28 @@ def add_deps(ctx, package_spec):
         with open(packages_file, 'r') as f:
             for line in f:
                 stripped_line = line.strip()
-                if len(stripped_line) and not stripped_line.startswith('#') and '==' in stripped_line:
+                if not stripped_line or stripped_line.startswith('#'):
+                    updated_lines.append(line)
+                    continue
+                if '==' in stripped_line:
                     current_name, current_version = stripped_line.split('==', 1)
-                    # Normalize current name for comparison
-                    if current_name.replace('_', '-') == new_name_normalized:
-                        if new_version:
-                            updated_lines.append(f"{new_name}=={new_version}\n") # Use original new_name format
-                            print(f"Updating {current_name} from {current_version} to {new_version}")
-                        else:
-                            updated_lines.append(f"{new_name}\n") # No version specified, just package name
-                            print(f"Updating {current_name} (version will be updated to latest if specified)")
-                        package_found = True
-                    else:
-                        updated_lines.append(line)
                 else:
-                    updated_lines.append(line) # Keep comments, empty lines, or lines without '=='
+                    current_name, current_version = stripped_line, None
+                if current_name.replace('_', '-') == new_name_normalized:
+                    if package_found:
+                        # Drop duplicate entries left over from earlier runs
+                        print(f"Removing duplicate entry for {current_name}")
+                        continue
+                    if new_version:
+                        updated_lines.append(f"{new_name}=={new_version}\n")
+                        from_version = current_version if current_version else "unpinned"
+                        print(f"Updating {current_name} from {from_version} to {new_version}")
+                    else:
+                        updated_lines.append(f"{new_name}\n")
+                        print(f"Updating {current_name} (version will be updated to latest if specified)")
+                    package_found = True
+                else:
+                    updated_lines.append(line)
     except FileNotFoundError:
         print(f"Packages file '{packages_file}' not found. Creating.")
         # If file doesn't exist, we'll create it below
