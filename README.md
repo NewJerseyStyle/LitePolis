@@ -1,6 +1,6 @@
 # LitePolis
 Infrastructure for E-democracy  
-![](https://img.shields.io/badge/status-beta_test-orange) ![](https://img.shields.io/badge/release-developer_facing-yellow) ![PyPI - Version](https://img.shields.io/pypi/v/litepolis)
+![](https://img.shields.io/badge/status-beta_test-yellow) ![](https://img.shields.io/badge/release-developer_facing-yellow) ![PyPI - Version](https://img.shields.io/pypi/v/litepolis)
 
 ## Overview
 
