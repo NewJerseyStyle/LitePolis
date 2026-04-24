@@ -314,15 +314,16 @@ def get_apps(ctx, monolithic=False):
     keep(config)
     packages_file = ctx.obj['packages_file']
 
-    package_specs = [] # Store full spec like name==version
+    package_specs = [] # Store full spec like name==version, or bare name
     try:
         with open(packages_file) as f:
             for line in f:
                 line = line.strip()
-                if len(line) and not line.startswith('#') and '==' in line:
-                     package_specs.append(line)
-                elif len(line) and not line.startswith('#'):
-                     print(f"Warning: Line '{line}' in {packages_file} is missing version specifier '=='. Skipping.")
+                if not line or line.startswith('#'):
+                    continue
+                if '==' not in line:
+                    print(f"Warning: Line '{line}' in {packages_file} is missing version specifier '=='. Using installed version.")
+                package_specs.append(line)
     except FileNotFoundError:
          print(f"Warning: Packages file '{packages_file}' not found when getting apps.")
 
