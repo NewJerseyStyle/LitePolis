@@ -38,7 +38,9 @@ def deploy(ctx, packages_file, cluster):
     ctx.obj['packages_file'] = packages_file
     ctx.obj['cluster'] = cluster
     if not os.path.exists(packages_file):
-        os.makedirs(os.path.dirname(packages_file), exist_ok=True)
+        parent = os.path.dirname(packages_file)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
         Path(packages_file).touch()
 
 @deploy.command()
@@ -56,8 +58,7 @@ def list_deps(ctx):
                         name, version = line.split('==', 1)
                         required_packages[name] = version
                     else:
-                        # Handle lines without version specifier if needed, or raise error
-                        print(f"Warning: Line '{line}' in {packages_file} is missing version specifier '=='. Skipping.")
+                        required_packages[line] = "(unpinned)"
     except FileNotFoundError:
         print(f"Error: Packages file '{packages_file}' not found.")
         return
@@ -149,7 +150,9 @@ def add_deps(ctx, package_spec):
 
     # Write the updated list back to the file
     try:
-        os.makedirs(os.path.dirname(packages_file), exist_ok=True)
+        parent = os.path.dirname(packages_file)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
         with open(packages_file, 'w') as f:
             f.writelines(updated_lines)
     except IOError as e:
@@ -183,16 +186,15 @@ def remove_deps(ctx, package_name):
         with open(packages_file, 'r') as f:
             for line in f:
                 stripped_line = line.strip()
-                if len(stripped_line) and not stripped_line.startswith('#') and '==' in stripped_line:
-                    current_name, _ = stripped_line.split('==', 1)
-                    # Normalize current name for comparison
-                    if current_name.replace('_', '-') == package_name_normalized:
-                        removed = True
-                        print(f"Removing {stripped_line} from {packages_file}")
-                    else:
-                        updated_lines.append(line)
+                if not stripped_line or stripped_line.startswith('#'):
+                    updated_lines.append(line)
+                    continue
+                current_name = stripped_line.split('==', 1)[0]
+                if current_name.replace('_', '-') == package_name_normalized:
+                    removed = True
+                    print(f"Removing {stripped_line} from {packages_file}")
                 else:
-                    updated_lines.append(line) # Keep comments, empty lines, or lines without '=='
+                    updated_lines.append(line)
 
         if not removed:
             raise ValueError(f"Package '{package_name}' not found in dependencies file '{packages_file}'.")
@@ -222,7 +224,7 @@ def sync_deps(ctx):
         with open(packages_file, 'r') as f:
             for line in f:
                 line = line.strip()
-                if len(line) and not line.startswith('#') and '==' in line:
+                if len(line) and not line.startswith('#'):
                     packages_to_install.append(line)
     except FileNotFoundError:
         print(f"Error: Packages file '{packages_file}' not found.")
@@ -310,19 +312,23 @@ def init_config(ctx):
 
 def get_apps(ctx, monolithic=False):
     config = configparser.ConfigParser()
-    config.read(DEFAULT_CONFIG_PATH)
+    if not config.read(DEFAULT_CONFIG_PATH):
+        print(f"Warning: Config file '{DEFAULT_CONFIG_PATH}' not found or empty. "
+              f"Modules will fall back to DEFAULT_CONFIG values. "
+              f"Run 'litepolis-cli deploy init-config' to generate it.")
     keep(config)
     packages_file = ctx.obj['packages_file']
 
-    package_specs = [] # Store full spec like name==version
+    package_specs = [] # Store full spec like name==version, or bare name
     try:
         with open(packages_file) as f:
             for line in f:
                 line = line.strip()
-                if len(line) and not line.startswith('#') and '==' in line:
-                     package_specs.append(line)
-                elif len(line) and not line.startswith('#'):
-                     print(f"Warning: Line '{line}' in {packages_file} is missing version specifier '=='. Skipping.")
+                if not line or line.startswith('#'):
+                    continue
+                if '==' not in line:
+                    print(f"Warning: Line '{line}' in {packages_file} is missing version specifier '=='. Using installed version.")
+                package_specs.append(line)
     except FileNotFoundError:
          print(f"Warning: Packages file '{packages_file}' not found when getting apps.")
 
@@ -492,7 +498,7 @@ def validate_command(ctx):
     with open(packages_file) as f:
         for line in f:
             line = line.strip()
-            if len(line) and not line.startswith('#') and '==' in line:
+            if len(line) and not line.startswith('#'):
                 package_specs.append(line)
     
     if not package_specs:
