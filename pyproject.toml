@@ -48,6 +48,9 @@ particiapp = [
     "litepolis-router-particiapi",
     "litepolis-ui-particiapp",
 ]
+test = [
+    "pytest",
+]
 
 [project.scripts]
 litepolis-cli = "litepolis.core:main"
