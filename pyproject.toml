@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "litepolis"
-version = "1.0.9"
+version = "1.0.10"
 authors = [
     { name = "Yuan XU", email = "dev.source@outlook.com" },
 ]
