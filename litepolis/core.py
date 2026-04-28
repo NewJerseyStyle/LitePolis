@@ -449,7 +449,11 @@ def get_apps(ctx, monolithic=False):
 @deploy.command("local")
 @click.pass_context
 def auto_init_local(ctx):
-    subprocess.run(["ray", "start", "--head"])
+    # Local mode: start Ray in-process so there is no CLI/file race
+    # and no dependence on PATH resolving `ray` to the same venv.
+    # Ignore RAY_ADDRESS for local mode so a stale env var can't redirect us.
+    os.environ.pop("RAY_ADDRESS", None)
+    ctx.obj['cluster'] = None
     ctx.forward(serve_command)
 
 def auto_init_gcp():
@@ -463,7 +467,18 @@ def auto_init_aws():
 @deploy.command("serve")
 @click.pass_context
 def serve_command(ctx):
-    ray.init(address=ctx.obj['cluster'])
+    addr = ctx.obj.get('cluster')
+    if addr in (None, "", "local"):
+        ray.init(ignore_reinit_error=True)
+    else:
+        try:
+            ray.init(address=addr, ignore_reinit_error=True)
+        except ConnectionError as e:
+            raise click.ClickException(
+                f"Could not attach to Ray cluster at address={addr!r}. "
+                f"Start a head node first (`ray start --head`) or use "
+                f"`litepolis deploy local` for an in-process cluster.\n{e}"
+            )
     register_config_service()
 
     app = get_apps(ctx)[0]
