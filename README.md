@@ -92,6 +92,10 @@ Each package must expose at module level:
 
 For database, middleware, and UI packages, the scaffolded template will show the expected interface.
 
+> 📚 See wiki:
+> * [LitePolis Package Lifecycle](https://github.com/NewJerseyStyle/LitePolis/wiki/LitePolis-Package-Lifecycle)
+> * [Tutorial: Creating New LitePolis Packages with litepolis‐cli](https://github.com/NewJerseyStyle/LitePolis/wiki/Tutorial:-Creating-New-LitePolis-Packages-with-litepolis%E2%80%90cli)
+
 ---
 
 ## CLI Reference
@@ -123,5 +127,4 @@ Commands:
 
 ## Next Steps:
 
-* Use StarRocks as database [WIP#todo]
 * Deploy to Google cloud with autoscale [WIP#todo]
