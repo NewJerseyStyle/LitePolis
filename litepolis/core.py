@@ -469,7 +469,28 @@ def auto_init_aws():
 def serve_command(ctx):
     addr = ctx.obj.get('cluster')
     if addr in (None, "", "local"):
-        ray.init(ignore_reinit_error=True)
+        # Preflight: Ray's object store has a 75 MB hard floor and
+        # auto-sizes to ~30% of MemAvailable. On small hosts that drops
+        # below the floor and ray.init() refuses to start. Pin it.
+        OBJECT_STORE_BYTES = 80 * 1024 * 1024  # just above Ray's 75 MB floor
+        RAY_OVERHEAD_BYTES = 600 * 1024 * 1024  # GCS + raylet + 1 worker + serve
+        try:
+            import psutil
+            available = psutil.virtual_memory().available
+            needed = OBJECT_STORE_BYTES + RAY_OVERHEAD_BYTES
+            if available < needed:
+                print(
+                    f"Warning: only {available // (1024*1024)} MiB RAM available; "
+                    f"Ray needs ~{needed // (1024*1024)} MiB to run reliably. "
+                    f"Free memory or use a larger host before serving traffic."
+                )
+        except ImportError:
+            pass
+        ray.init(
+            ignore_reinit_error=True,
+            object_store_memory=OBJECT_STORE_BYTES,
+            include_dashboard=False,  # avoids ray[default] extras requirement
+        )
     else:
         try:
             ray.init(address=addr, ignore_reinit_error=True)
