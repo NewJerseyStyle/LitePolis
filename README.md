@@ -14,6 +14,8 @@ The core of LitePolis is a central package manager that discovers and orchestrat
 [![Video about LitePolis](image_with_play_button(1).png)](https://www.canva.com/design/DAGkKYnWMIE/acGGYFVWpYpFA-t65YcyWw/watch?embed)
 
 ## Quick start
+> ⚠️ If you are using it in a docker, please ensure `/dev/shm` is at least 8GB; and for running on Debian/Ubuntu you may resize `sudo mount -o remount,size=8G /dev/shm` if `df -h /dev/shm` shows smaller than 8GB.
+
 ### 1. Install the LitePolis CLI
 
 The `litepolis-cli` is your main tool for creating, managing, and deploying LitePolis packages.
